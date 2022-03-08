@@ -1,0 +1,16 @@
+{
+    "saison":"21-22",
+    "round":"vr",
+    "teams":[
+        {
+            "league":"Herren-Bezirksklasse-Gr-1",
+            "groupId":"397348",
+            "teamId":"2516687"
+        },
+        {
+            "league":"Herren-Kreisliga-B-Gr-1",
+            "groupId":"397188",
+            "teamId":"2515123"
+        }
+    ] 
+}
