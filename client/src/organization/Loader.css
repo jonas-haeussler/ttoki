@@ -1,6 +1,8 @@
-.container {
+.loading-container {
   width: 100px;
   height: 100px;
+  left: 40%;
+  right: 40%;
   position: relative;
   -webkit-animation: rotate 3s linear infinite;
           animation: rotate 3s linear infinite;
@@ -28,14 +30,14 @@
   }
 }
 .ball {
-  width: 50px;
-  height: 50px;
-  border-radius: 50px;
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
   -webkit-animation: racket 1s ease-in-out infinite;
           animation: racket 1s ease-in-out infinite;
   -webkit-transform: scale(0.5);
           transform: scale(0.5);
-  box-shadow: 0px 0px 100px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 0px 100% rgba(0, 0, 0, 0.5);
 }
 .ball:nth-child(1) {
   background: #333333;
@@ -136,6 +138,7 @@
       position: relative;
       min-height: 6cm;
       width: 90%;
+      height: 90%;
 
       margin-top: 2%;
       margin-bottom: 2%;

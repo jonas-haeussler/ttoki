@@ -1,4 +1,5 @@
 "use strict";
+/* eslint-disable camelcase */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,24 +37,35 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-/* eslint-disable camelcase */
-var luxon_1 = require("luxon");
-var express = require("express");
-var bodyParser = require("body-parser");
-// eslint-disable-next-line camelcase
+exports.postTable = exports.postPlayer = exports.getDates = exports.parseDate = exports.getPlayers = exports.createNewSpreadsheet = exports.addNewGoogleConfig = void 0;
 var googleapis_1 = require("googleapis");
+var luxon_1 = require("luxon");
 var types_1 = require("../shared/types");
 var uuid_1 = require("uuid");
-var loadMatches_1 = require("./loadMatches");
-var PORT = process.env.PORT || 3001;
-// @ts-ignore
-var app = express();
-var SPREADSHEET_ID = '1z5bmcFTl3qiLwJBybcH-nuDdpw7UluJw-c3fhMqVeWY';
-var PLAYER_RANGE = 'Hauptseite!B9:B';
-var DATES_RANGE = 'Hauptseite!C1:1';
-var FIRST_TEAM_DATA_RANGE = 'Hauptseite!C2:Z4';
-var SECOND_TEAM_DATA_RANGE = 'Hauptseite!C5:Z7';
-var ALL_ENTRIES_RANGE = 'Hauptseite!C9:ZZZ';
+var fs_1 = require("fs");
+/**
+ *
+ * @returns
+ */
+function getGoogleDrive() {
+    return __awaiter(this, void 0, void 0, function () {
+        var auth, client, drive;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    auth = new googleapis_1.google.auth.GoogleAuth({
+                        keyFile: './server/lithe-paratext-282507-55e107b033a1.json',
+                        scopes: ['https://www.googleapis.com/auth/drive']
+                    });
+                    return [4 /*yield*/, auth.getClient()];
+                case 1:
+                    client = _a.sent();
+                    drive = googleapis_1.google.drive({ version: 'v3', auth: client });
+                    return [2 /*return*/, drive];
+            }
+        });
+    });
+}
 /**
  * Accomplishes the auth process and gets the needed google spreadsheets
  * @return {Promise<sheets_v4.Sheets>} The google spreadsheets
@@ -91,19 +103,41 @@ function getPlayerRange(playerIndex, dateIndex) {
 }
 /**
  *
+ * @param config
+ */
+function addNewGoogleConfig(config) {
+    var raw = (0, fs_1.readFileSync)('./googleConfigs.json').toString();
+    var configs = JSON.parse(raw);
+    configs.push(config);
+    (0, fs_1.writeFileSync)('./googleConfigs.json', JSON.stringify(configs));
+}
+exports.addNewGoogleConfig = addNewGoogleConfig;
+/**
+ *
+ * @returns
+ */
+function getGoogleConfig() {
+    var raw = (0, fs_1.readFileSync)('./googleConfigs.json').toString();
+    var configs = JSON.parse(raw);
+    return configs.pop();
+}
+/**
+ *
  * @param sheets
  * @param ranges
  * @returns
  */
 function getRangeData(sheets, ranges) {
     return __awaiter(this, void 0, void 0, function () {
-        var data;
+        var googleConfig, data;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, sheets.spreadsheets.values.batchGet({
-                        spreadsheetId: SPREADSHEET_ID,
-                        ranges: ranges
-                    })];
+                case 0:
+                    googleConfig = getGoogleConfig();
+                    return [4 /*yield*/, sheets.spreadsheets.values.batchGet({
+                            spreadsheetId: googleConfig.spreadSheetId,
+                            ranges: ranges
+                        })];
                 case 1:
                     data = (_a.sent()).data;
                     return [2 /*return*/, data.valueRanges];
@@ -112,23 +146,53 @@ function getRangeData(sheets, ranges) {
     });
 }
 /**
+ *
+ */
+function createNewSpreadsheet() {
+    return __awaiter(this, void 0, void 0, function () {
+        var drive, spreadSheetId;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getGoogleDrive()];
+                case 1:
+                    drive = _a.sent();
+                    return [4 /*yield*/, drive.files.create({
+                            requestBody: {
+                                name: 'Mannschaftsplanung',
+                                parents: ['1Lt5HFmeRgoNJ1OQGNCvauvtKOf-nF3VZ'],
+                                mimeType: 'application/vnd.google-apps.spreadsheet'
+                            }
+                        })];
+                case 2:
+                    spreadSheetId = (_a.sent()).data.id;
+                    if (spreadSheetId) {
+                        return [2 /*return*/, spreadSheetId];
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.createNewSpreadsheet = createNewSpreadsheet;
+/**
  * Gets the players currently available in the Google spreadsheet
- * @return {Promise<strin | undefined>} The currently available players
+ * @return {Promise<string | undefined>} The currently available players
  */
 function getPlayers() {
     return __awaiter(this, void 0, void 0, function () {
-        var sheets, data, players, err_1;
+        var sheets, googleConfig, data, players, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getGoogleSheets()];
                 case 1:
                     sheets = _a.sent();
+                    googleConfig = getGoogleConfig();
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, 4, , 5]);
                     return [4 /*yield*/, sheets.spreadsheets.values.get({
-                            spreadsheetId: SPREADSHEET_ID,
-                            range: PLAYER_RANGE
+                            spreadsheetId: googleConfig.spreadSheetId,
+                            range: googleConfig.ranges.players
                         })];
                 case 3:
                     data = (_a.sent()).data;
@@ -146,6 +210,25 @@ function getPlayers() {
         });
     });
 }
+exports.getPlayers = getPlayers;
+/**
+   * A helper function to get a Date string from day and time strings
+   * @param {string} day The day of the date
+   * @param {string} time The time of the date at the given day
+   * @return {string} An ISO representation of the date
+   */
+function parseDate(day, time) {
+    var date = luxon_1.DateTime.fromFormat(day, 'dd.MM.yy');
+    if (time) {
+        var parsed = luxon_1.DateTime.fromISO(time);
+        var today = luxon_1.DateTime.now().startOf('day');
+        var timeOfDay = parsed.diff(today);
+        var result = date.startOf('day').plus(timeOfDay);
+        return result.toISO();
+    }
+    return date.toISO();
+}
+exports.parseDate = parseDate;
 /**
  * Get a TTDates object from Google Spreadsheets for the given active players
  * @param {Array<string>} activePlayers The active players in the React App
@@ -153,23 +236,6 @@ function getPlayers() {
  */
 function getDates(activePlayers) {
     return __awaiter(this, void 0, void 0, function () {
-        /**
-         * A helper function to get a Date string from day and time strings
-         * @param {string} day The day of the date
-         * @param {string} time The time of the date at the given day
-         * @return {string} An ISO representation of the date
-         */
-        function parseDate(day, time) {
-            var date = luxon_1.DateTime.fromFormat(day, 'dd.MM.yy');
-            if (time) {
-                var parsed = luxon_1.DateTime.fromISO(time);
-                var today = luxon_1.DateTime.now().startOf('day');
-                var timeOfDay = parsed.diff(today);
-                var result = date.startOf('day').plus(timeOfDay);
-                return result.toISO();
-            }
-            return date.toISO();
-        }
         /**
          *
          * @param matches
@@ -189,18 +255,19 @@ function getDates(activePlayers) {
             }
             return null;
         }
-        var sheets, ranges, data, dates, matchesFirstTeam, matchesSecondTeam, allPlayers_1, entries_1, ttDates, _loop_1, i;
+        var sheets, googleConfig, ranges, data, dates, matchesFirstTeam, matchesSecondTeam, allPlayers_1, entries_1, ttDates, _loop_1, i;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getGoogleSheets()];
                 case 1:
                     sheets = _a.sent();
+                    googleConfig = getGoogleConfig();
                     ranges = [
-                        DATES_RANGE,
-                        FIRST_TEAM_DATA_RANGE,
-                        SECOND_TEAM_DATA_RANGE,
-                        PLAYER_RANGE,
-                        ALL_ENTRIES_RANGE,
+                        googleConfig.ranges.dates,
+                        googleConfig.ranges.gamesFirstTeam,
+                        googleConfig.ranges.gamesSecondTeam,
+                        googleConfig.ranges.players,
+                        googleConfig.ranges.entries,
                     ];
                     return [4 /*yield*/, getRangeData(sheets, ranges)];
                 case 2:
@@ -277,6 +344,7 @@ function getDates(activePlayers) {
         });
     });
 }
+exports.getDates = getDates;
 /**
  *
  * @param ttDate
@@ -284,12 +352,13 @@ function getDates(activePlayers) {
  */
 function postPlayer(ttDate) {
     return __awaiter(this, void 0, void 0, function () {
-        var sheets, values_1, dates_1, players_1, playerRanges, err_2;
+        var sheets, googleConfig, values_1, dates_1, players_1, playerRanges, err_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getGoogleSheets()];
                 case 1:
                     sheets = _a.sent();
+                    googleConfig = getGoogleConfig();
                     _a.label = 2;
                 case 2:
                     _a.trys.push([2, 6, , 7]);
@@ -306,7 +375,7 @@ function postPlayer(ttDate) {
                         return getPlayerRange(players_1 === null || players_1 === void 0 ? void 0 : players_1.indexOf(player), dates_1 === null || dates_1 === void 0 ? void 0 : dates_1.ttDates.indexOf(ttDate));
                     });
                     return [4 /*yield*/, sheets.spreadsheets.values.batchUpdate({
-                            spreadsheetId: SPREADSHEET_ID,
+                            spreadsheetId: googleConfig.spreadSheetId,
                             requestBody: {
                                 data: playerRanges.map(function (range) { return ({ range: range, values: values_1 }); }),
                                 valueInputOption: 'RAW'
@@ -325,53 +394,48 @@ function postPlayer(ttDate) {
         });
     });
 }
-(0, loadMatches_1.loadMatches)();
-app.listen(PORT, function () {
-    console.log("Server listening on ".concat(PORT));
-});
-app.get('/players', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var players;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, getPlayers()];
-            case 1:
-                players = _a.sent();
-                res.json(players);
-                return [2 /*return*/];
-        }
+exports.postPlayer = postPlayer;
+/**
+ *
+ * @param dates
+ * @param gamesFirstTeam
+ * @param gamesSecondTeam
+ * @param players
+ */
+function postTable(dates, gamesFirstTeam, gamesSecondTeam, players) {
+    return __awaiter(this, void 0, void 0, function () {
+        var sheets, googleConfig, e_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getGoogleSheets()];
+                case 1:
+                    sheets = _a.sent();
+                    googleConfig = getGoogleConfig();
+                    _a.label = 2;
+                case 2:
+                    _a.trys.push([2, 4, , 5]);
+                    return [4 /*yield*/, sheets.spreadsheets.values.batchUpdate({
+                            spreadsheetId: googleConfig.spreadSheetId,
+                            requestBody: {
+                                data: [
+                                    { range: googleConfig.ranges.dates, values: dates },
+                                    { range: googleConfig.ranges.gamesFirstTeam, values: gamesFirstTeam },
+                                    { range: googleConfig.ranges.gamesSecondTeam, values: gamesSecondTeam },
+                                    { range: googleConfig.ranges.players, values: players }
+                                ],
+                                valueInputOption: 'RAW'
+                            }
+                        })];
+                case 3:
+                    _a.sent();
+                    return [3 /*break*/, 5];
+                case 4:
+                    e_1 = _a.sent();
+                    console.error(e_1);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
+        });
     });
-}); });
-app.get('/dates', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var filters, activePlayers, dates;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0:
-                filters = req.query.filters;
-                if (!filters) return [3 /*break*/, 2];
-                activePlayers = JSON.parse(filters.toString());
-                return [4 /*yield*/, getDates(activePlayers)];
-            case 1:
-                dates = (_a = (_b.sent())) === null || _a === void 0 ? void 0 : _a.ttDates;
-                res.json(dates);
-                console.log(dates);
-                _b.label = 2;
-            case 2: return [2 /*return*/];
-        }
-    });
-}); });
-app.post('/player', bodyParser.json(), function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var date, answer;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                date = req.body;
-                console.log(date);
-                return [4 /*yield*/, postPlayer(date)];
-            case 1:
-                answer = _a.sent();
-                console.log(answer);
-                return [2 /*return*/];
-        }
-    });
-}); });
+}
+exports.postTable = postTable;

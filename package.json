@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "rimraf server/*.js && npx tsc server/index.ts && node server/index.js",
     "client": "cd client && react-scripts start",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "init": "rimraf server/*.js && npx tsc server/initSeason.ts && node server/initSeason.js"
   },
   "keywords": [],
   "author": "",
