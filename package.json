@@ -2,13 +2,13 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "server/index.js",
+  "main": "server/index.ts",
   "scripts": {
     "install-client": "cd client && npm install",
     "heroku-postbuild": "npm run install-client && npm run build",
     "client": "cd client && npm start",
-    "start": "rimraf server/*.js && npx tsc server/index.ts && node server/index.js",
-    "init": "rimraf server/*.js && npx tsc server/initSeason.ts && node server/initSeason.js",
+    "start": "ts-node server/index.ts",
+    "init": "ts-node server/initSeason.js",
     "dev": "concurrently -n 'server,client' -c 'blue,green' \"nodemon server/index.ts\" \"npm run client\""
   },
   "keywords": [],
