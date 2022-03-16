@@ -206,14 +206,13 @@ async function initTable() {
     for (const ttDate of ttDates.ttDates) {
       dateValues.push(ttDate.date);
       firstTeamEnemies.push(ttDate.firstTeam?.enemy ? ttDate.firstTeam.enemy : '');
-      firstTeamTimes.push(ttDate.firstTeam?.time ? ttDate.firstTeam.time : '');
       let venue = (ttDate.firstTeam?.venue === Venue.Home ? 'Heim':'Auswärts');
       firstTeamVenues.push(ttDate.firstTeam?.venue !== undefined ? venue : '');
+      firstTeamTimes.push(ttDate.firstTeam?.time ? ttDate.firstTeam.time : '');
       secondTeamEnemies.push(ttDate.secondTeam?.enemy ? ttDate.secondTeam.enemy : '');
-      secondTeamTimes.push(ttDate.secondTeam?.time ? ttDate.secondTeam.time  : '');
       venue = ttDate.secondTeam?.venue === Venue.Home ? 'Heim':'Auswärts';
-      console.log(venue + ' ' + ttDate.secondTeam?.venue);
       secondTeamVenues.push(ttDate.secondTeam?.venue !== undefined ? venue : '');
+      secondTeamTimes.push(ttDate.secondTeam?.time ? ttDate.secondTeam.time  : '');
     }
     console.log(ttDates.allPlayers);
     for(let i = 0; i < ttDates.allPlayers.length; i++) {
@@ -224,8 +223,8 @@ async function initTable() {
       }
     }
     postTable([dateValues],
-      [firstTeamEnemies, firstTeamTimes, firstTeamVenues],
-      [secondTeamEnemies, secondTeamTimes, secondTeamVenues],
+      [firstTeamEnemies, firstTeamVenues, firstTeamTimes],
+      [secondTeamEnemies, secondTeamVenues, secondTeamTimes],
       ttDates.allPlayers.map((player) => {
         const result = player.split(', ');
         return [result[1] + ' ' + result[0]];

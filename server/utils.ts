@@ -4,18 +4,28 @@ import {google, sheets_v4, drive_v3} from 'googleapis';
 import {DateTime, Duration} from 'luxon';
 import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from '../shared/types';
 import {v4 as uuid} from 'uuid';
-import { fstat, readFileSync, writeFileSync, createReadStream } from 'fs';
+import {readFileSync, writeFileSync} from 'fs';
+
+
+function getGoogleCredentials():Object | undefined {
+  const keysVar = process.env['GOOGLE_CREDENTIALS'];
+  if (keysVar) {
+    const keys = JSON.parse(keysVar);
+    return keys;
+  }
+}
 
 /**
  * 
  * @returns 
  */
-async function getGoogleDrive():Promise<drive_v3.Drive> {
+async function getGoogleDrive():Promise<drive_v3.Drive | undefined> {
+  const credentials = getGoogleCredentials();
   const auth = new google.auth.GoogleAuth({
-    keyFile: './server/lithe-paratext-282507-55e107b033a1.json',
+    credentials: credentials,
     scopes: ['https://www.googleapis.com/auth/drive']});
   const client = await auth.getClient();
-  const drive:drive_v3.Drive = google.drive({version:'v3', auth: client});
+  const drive:drive_v3.Drive = google.drive({version: 'v3', auth: client});
   return drive;
 }
 
@@ -24,8 +34,9 @@ async function getGoogleDrive():Promise<drive_v3.Drive> {
  * @return {Promise<sheets_v4.Sheets>} The google spreadsheets
  */
 async function getGoogleSheets():Promise<sheets_v4.Sheets> {
+  const credentials = getGoogleCredentials();
   const auth = new google.auth.GoogleAuth({
-    keyFile: './server/lithe-paratext-282507-55e107b033a1.json',
+    credentials: credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets']});
   const client = await auth.getClient();
   const sheets:sheets_v4.Sheets = google.sheets({version: 'v4', auth: client});
@@ -38,8 +49,8 @@ async function getGoogleSheets():Promise<sheets_v4.Sheets> {
  * @return 
  */
 function getPlayerRange(playerIndex:number, dateIndex:number):string {
-  if (dateIndex) {
-    return `R[${8 + playerIndex}]C[${3 + dateIndex}]`;
+  if (dateIndex !== undefined) {
+    return `R[${8 + playerIndex}]C[${2 + dateIndex}]`;
   }
   return `R[${8 + playerIndex}]`;
 }
@@ -83,15 +94,17 @@ async function getRangeData(sheets:sheets_v4.Sheets, ranges:string[]) {
  */
 export async function createNewSpreadsheet():Promise<string|undefined> {
   const drive = await getGoogleDrive();
-  const spreadSheetId = (await drive.files.create({
-    requestBody: {
-      name: 'Mannschaftsplanung',
-      parents: ['1Lt5HFmeRgoNJ1OQGNCvauvtKOf-nF3VZ'],
-      mimeType: 'application/vnd.google-apps.spreadsheet'
+  if (drive) {
+    const spreadSheetId = (await drive.files.create({
+      requestBody: {
+        name: 'Mannschaftsplanung',
+        parents: ['1Lt5HFmeRgoNJ1OQGNCvauvtKOf-nF3VZ'],
+        mimeType: 'application/vnd.google-apps.spreadsheet',
+      },
+    })).data.id;
+    if (spreadSheetId) {
+      return spreadSheetId;
     }
-  })).data.id;
-  if (spreadSheetId) {
-    return spreadSheetId;
   }
 }
 
@@ -150,8 +163,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
   function getGame(matches:string[][],
       dateIndex:number,
       dates:string[]): Game | null {
-    if (matches.every((elem) => elem[dateIndex] !== undefined &&
-      elem[dateIndex] !== '')) {
+    if (matches.every((elem) => elem[dateIndex] !== undefined && elem[dateIndex] !== '')) {
       const date:string = parseDate(dates[dateIndex], matches[2][dateIndex]);
       return {
         time: date,
@@ -200,18 +212,20 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
       const firstTeam:Game | null = getGame(matchesFirstTeam, i, dates);
       const secondTeam:Game | null = getGame(matchesSecondTeam, i, dates);
       let option:Option = Option.Dunno;
-      if (activePlayers && activePlayers.length > 0) {
-        option = entries[
-            allPlayers.indexOf(activePlayers[0])][i].toLowerCase() as Option;
-        if (activePlayers.length > 1) {
-          option = activePlayers.map(
-              (activePlayer) => {
-                let entry = entries[allPlayers.indexOf(activePlayer)][i];
-                entry = entry.toLowerCase();
-                return entry;
-              }).reduce(
-              (prev, curr) =>
-              prev === curr ? curr : Option.Dunno) as Option;
+      if (activePlayers && activePlayers.length > 0 && entries && entries.length > 0) {
+        const activePlayerIndex = allPlayers.indexOf(activePlayers[0]);
+        if (entries.length > activePlayerIndex && entries[activePlayerIndex].length > i) {
+          option = entries[activePlayerIndex][i].toLowerCase() as Option;
+          if (activePlayers.length > 1) {
+            option = activePlayers.map(
+                (activePlayer) => {
+                  let entry = entries[allPlayers.indexOf(activePlayer)][i];
+                  entry = entry.toLowerCase();
+                  return entry;
+                }).reduce(
+                (prev, curr) =>
+                prev === curr ? curr : Option.Dunno) as Option;
+          }
         }
       }
       if (!(Object.values(Option).some((v) => v === option))) {
@@ -219,7 +233,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
       }
       const availablePlayers:string[] = [];
       for (let j = 0; j < allPlayers.length; j++) {
-        if (entries[j][i] === Option.Yes) {
+        if (entries.length > j && entries[j].length > i && entries[j][i] === Option.Yes) {
           availablePlayers.push(allPlayers[j]);
         }
       }
@@ -260,8 +274,11 @@ export async function postPlayer(ttDate:TTDate):Promise<string> {
     }
     if (dates && players) {
       const playerRanges = ttDate.activePlayers.map((player) => {
-        return getPlayerRange(players?.indexOf(player),
-            dates?.ttDates.indexOf(ttDate));
+        const dateObj = dates?.ttDates.find((date) => date.date === ttDate.date);
+        if (dateObj) {
+          return getPlayerRange(players?.indexOf(player),
+              dates?.ttDates.indexOf(dateObj));
+        }
       });
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: googleConfig.spreadSheetId,
@@ -294,18 +311,18 @@ export async function postTable(dates:string[][],
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: googleConfig.spreadSheetId,
       requestBody: {
-          
+
         data: [
           {range: googleConfig.ranges.dates, values: dates},
           {range: googleConfig.ranges.gamesFirstTeam, values: gamesFirstTeam},
           {range: googleConfig.ranges.gamesSecondTeam, values: gamesSecondTeam},
-          {range: googleConfig.ranges.players, values: players}
-      ],
+          {range: googleConfig.ranges.players, values: players},
+        ],
         valueInputOption: 'RAW',
       },
-    }
+    },
     );
-  } catch(e) {
+  } catch (e) {
     console.error(e);
   }
 }

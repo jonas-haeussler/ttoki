@@ -45,5 +45,5 @@
     "@types/styled-components": "^5.1.24",
     "react-router-dom": "^6.2.1"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost"
 }

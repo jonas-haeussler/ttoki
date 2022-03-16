@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 
-import * as express from 'express';
+const express = require('express');
 import {Request, Response} from 'express';
 
 import * as bodyParser from 'body-parser';
@@ -12,6 +12,10 @@ const PORT = process.env.PORT || 3001;
 
 // @ts-ignore
 const app = express();
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('client/build'));
+}
 
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
@@ -27,12 +31,9 @@ app.get('/dates', async (req:Request, res:Response) => {
     const activePlayers:string[] = JSON.parse(filters.toString());
     const dates = (await getDates(activePlayers))?.ttDates;
     res.json(dates);
-    console.log(dates);
   }
 });
 app.post('/player', bodyParser.json(), async (req:Request, res:Response) => {
   const date:TTDate = req.body as TTDate;
-  console.log(date);
   const answer = await postPlayer(date);
-  console.log(answer);
 });
