@@ -26,17 +26,20 @@ app.listen(PORT as number, '0.0.0.0', () => {
 
 app.get('/players', async (req, res) => {
   const players = await getPlayers();
+  console.log('Getting players from Google Sheets');
   res.json(players);
 });
 app.get('/dates', async (req, res) => {
   const filters = req.query.filters;
   if (filters) {
+    console.log('Getting dates from Google Sheets');
     const activePlayers:string[] = JSON.parse(filters.toString());
     const dates = (await getDates(activePlayers))?.ttDates;
     res.json(dates);
   }
 });
 app.post('/player', bodyParser.json(), async (req, res) => {
+  console.log('Posting players to Google Sheets');
   const date:TTDate = req.body as TTDate;
   const answer = await postPlayer(date);
 });
