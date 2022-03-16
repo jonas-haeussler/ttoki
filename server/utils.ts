@@ -6,7 +6,10 @@ import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from '../shared/type
 import {v4 as uuid} from 'uuid';
 import {readFileSync, writeFileSync} from 'fs';
 
-
+/**
+ * 
+ * @returns 
+ */
 function getGoogleCredentials():Object | undefined {
   const keysVar = process.env['GOOGLE_CREDENTIALS'];
   if (keysVar) {
