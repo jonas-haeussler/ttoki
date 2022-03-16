@@ -1,9 +1,8 @@
 /* eslint-disable camelcase */
 
-const express = require('express');
-import {Request, Response} from 'express';
+import express = require('express');
 
-import * as bodyParser from 'body-parser';
+import bodyParser = require('body-parser');
 
 import {getPlayers, getDates, postPlayer} from './utils';
 import {TTDate} from '../shared/types';
@@ -21,11 +20,11 @@ app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });
 
-app.get('/players', async (req:Request, res:Response) => {
+app.get('/players', async (req, res) => {
   const players = await getPlayers();
   res.json(players);
 });
-app.get('/dates', async (req:Request, res:Response) => {
+app.get('/dates', async (req, res) => {
   const filters = req.query.filters;
   if (filters) {
     const activePlayers:string[] = JSON.parse(filters.toString());
@@ -33,7 +32,7 @@ app.get('/dates', async (req:Request, res:Response) => {
     res.json(dates);
   }
 });
-app.post('/player', bodyParser.json(), async (req:Request, res:Response) => {
+app.post('/player', bodyParser.json(), async (req, res) => {
   const date:TTDate = req.body as TTDate;
   const answer = await postPlayer(date);
 });
