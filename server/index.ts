@@ -4,13 +4,32 @@ import express = require('express');
 
 import bodyParser = require('body-parser');
 
-import {getPlayers, getDates, postPlayer} from './utils';
+import {getPlayers, getDates, postPlayer} from './googleUtils';
 import {TTDate} from '../shared/types';
+import {getMyTTOkiTeamData, login} from './myTTUtils';
+import {RequestInit} from 'node-fetch';
 
 const PORT = process.env.PORT || 3001;
 
 // @ts-ignore
 const app = express();
+
+let opt:RequestInit;
+login().then((res) => {
+  opt = res;
+  loopLogIn();
+});
+
+/**
+ * 
+ */
+function loopLogIn() {
+  setTimeout(async () => {
+    console.log('Relogging in to mytischtennis');
+    opt = await login();
+    loopLogIn();
+  }, 3600000);
+}
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'));
@@ -48,4 +67,8 @@ app.post('/player', bodyParser.json(), async (req, res) => {
   console.log('Posting players to Google Sheets');
   const date:TTDate = req.body as TTDate;
   const answer = await postPlayer(date);
+});
+app.get('/myTTTeam', async (req, res) => {
+  const myTTTeamData = await getMyTTOkiTeamData(opt);
+  res.json(myTTTeamData);
 });

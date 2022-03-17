@@ -4,7 +4,7 @@ import { Button, Form, FormControl, InputGroup } from "react-bootstrap";
 import { TTDate, Game } from "../../../shared/types";
 import { fetchDates } from "../main";
 import Date from "./Date";
-import Loader from "./Loader";
+import Loader from "../Loader";
 
 
 

@@ -27,6 +27,7 @@ export interface TeamConfig {
 export interface Config {
   readonly saison:string,
   readonly round:string,
+  readonly vereinId:string,
   readonly teams:TeamConfig[]
 }
 
@@ -36,6 +37,8 @@ export interface Game {
   readonly venue:Venue
 }
 export interface Player {
+  readonly team:1 | 2,
+  readonly position:number,
   readonly name:string,
   readonly actions:number,
   readonly wins:number,

@@ -2,7 +2,7 @@
 
 import {google, sheets_v4, drive_v3} from 'googleapis';
 import {DateTime, Duration} from 'luxon';
-import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from '../shared/types';
+import {Game, Option, TTDates, TTDate, Venue, GoogleConfig, Player} from '../shared/types';
 import {v4 as uuid} from 'uuid';
 import {readFileSync, writeFileSync} from 'fs';
 
