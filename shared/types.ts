@@ -22,7 +22,9 @@ export interface Tables {
 export interface TeamConfig {
   readonly league:string,
   readonly groupId:string,
-  readonly teamId:string
+  readonly teamId:string,
+  readonly teamName:string,
+  enemies?:{enemyId:string, enemyName:string}[]
 }
 export interface Config {
   readonly saison:string,
@@ -37,7 +39,7 @@ export interface Game {
   readonly venue:Venue
 }
 export interface Player {
-  readonly team:1 | 2,
+  readonly team:1 | 2 | 3 | 4 | 5 | 6 | 7,
   readonly position:number,
   readonly name:string,
   readonly actions:number,
@@ -45,6 +47,11 @@ export interface Player {
   readonly loses:number,
   readonly ttr:number,
   readonly qttr:number
+}
+
+export interface Team {
+  readonly name:string,
+  readonly members:Player[]
 }
 
 export interface TTDates {

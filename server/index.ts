@@ -4,9 +4,9 @@ import express = require('express');
 
 import bodyParser = require('body-parser');
 
-import {getPlayers, getDates, postPlayer} from './googleUtils';
+import {getAllPlayers, getDates, postPlayer} from './googleUtils';
 import {TTDate} from '../shared/types';
-import {getMyTTOkiTeamData, login} from './myTTUtils';
+import {getMyTTOkiTeamData, getUpcoming, login} from './myTTUtils';
 import {RequestInit} from 'node-fetch';
 
 const PORT = process.env.PORT || 3001;
@@ -31,6 +31,7 @@ function loopLogIn() {
   }, 3600000);
 }
 
+
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'));
   const path = require('path');
@@ -43,6 +44,9 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/statistics', (req, res) => {
     res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
   });
+  app.get('/upcoming', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
+  });
 }
 
 app.listen(PORT as number, '0.0.0.0', () => {
@@ -50,7 +54,7 @@ app.listen(PORT as number, '0.0.0.0', () => {
 });
 
 app.get('/players', async (req, res) => {
-  const players = await getPlayers();
+  const players = await getAllPlayers();
   console.log('Getting players from Google Sheets');
   res.json(players);
 });
@@ -71,4 +75,9 @@ app.post('/player', bodyParser.json(), async (req, res) => {
 app.get('/myTTTeam', async (req, res) => {
   const myTTTeamData = await getMyTTOkiTeamData(opt);
   res.json(myTTTeamData);
+});
+app.get('/nextMatches', async (req, res) => {
+  const teams = await getUpcoming(opt);
+  console.log(JSON.stringify(teams));
+  res.json(teams);
 });

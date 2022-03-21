@@ -2,6 +2,7 @@ import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
 import { ButtonGroup, Table, ToggleButton } from "react-bootstrap";
 import { TTDate } from "../../../shared/types";
+const Fade = require("react-reveal/Fade");
 
 const CustomButton = (props: {dateID:string, buttonID:string, handler:Function, radioValue:string}) => {
     return (
@@ -19,7 +20,7 @@ const CustomButton = (props: {dateID:string, buttonID:string, handler:Function, 
     )
 }
 
-const Date = (props: {ttDate:TTDate}) => {
+const Date = (props: {ttDate:TTDate, delay:number}) => {
     const [radioValue, setRadioValue] = useState(props.ttDate.option);
     useEffect(() => {
         const postOption = async (ttDate:TTDate) => {
@@ -41,39 +42,38 @@ const Date = (props: {ttDate:TTDate}) => {
 
     }, [radioValue]);
     return (
-        
-        <>
+        <Fade left delay={props.delay}>
             <Table striped bordered hover >
-            <thead>
-                <tr><th colSpan={2} style={{textAlign:"center"}}><h2>{DateTime.fromISO(props.ttDate.date).toFormat("dd.MM.yyyy")}</h2></th></tr>
-                <tr><th style={{width: 50}}>1. Mannschaft</th>
-                <th style={{width: "50%"}}>2. Mannschaft</th></tr>
-            </thead>
-            <tbody>
-                <tr>
-                    {props.ttDate.firstTeam ? <td>{`
-                                                    ${props.ttDate.firstTeam.enemy} 
-                                                    ${DateTime.fromISO(props.ttDate.firstTeam.time).toFormat("HH:mm")} 
-                                                    ${props.ttDate.firstTeam.venue === 0 ? "(Heimspiel)" : "(Auswärtsspiel)"}`}
-                                                </td> : <td></td>}
-                    {props.ttDate.secondTeam ? <td>{`
-                                                    ${props.ttDate.secondTeam.enemy} 
-                                                    ${DateTime.fromISO(props.ttDate.secondTeam.time).toFormat("HH:mm")} 
-                                                    ${props.ttDate.secondTeam.venue === 0 ? "(Heimspiel)" : "(Auswärtsspiel)"}`}
-                                                </td> : <td></td>}
-                </tr>
-                <tr>
-                <td align="center" colSpan={2}> 
-                    <ButtonGroup aria-label="Options">
-                        <CustomButton dateID={props.ttDate.id} buttonID={"ja"} handler={setRadioValue} radioValue={radioValue} />
-                        <CustomButton dateID={props.ttDate.id} buttonID={"nein"} handler={setRadioValue} radioValue={radioValue} />
-                        <CustomButton dateID={props.ttDate.id} buttonID={"vielleicht"} handler={setRadioValue} radioValue={radioValue} />
-                    </ButtonGroup>
-                </td>
-                </tr>
-            </tbody>
+                <thead>
+                    <tr><th colSpan={2} style={{textAlign:"center"}}><h2>{DateTime.fromISO(props.ttDate.date).toFormat("dd.MM.yyyy")}</h2></th></tr>
+                    <tr><th style={{width: "50%"}}>1. Mannschaft</th>
+                    <th style={{width: "50%"}}>2. Mannschaft</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {props.ttDate.firstTeam ? <td>{`
+                                                        ${props.ttDate.firstTeam.enemy} 
+                                                        ${DateTime.fromISO(props.ttDate.firstTeam.time).toFormat("HH:mm")} 
+                                                        ${props.ttDate.firstTeam.venue === 0 ? "(Heimspiel)" : "(Auswärtsspiel)"}`}
+                                                    </td> : <td></td>}
+                        {props.ttDate.secondTeam ? <td>{`
+                                                        ${props.ttDate.secondTeam.enemy} 
+                                                        ${DateTime.fromISO(props.ttDate.secondTeam.time).toFormat("HH:mm")} 
+                                                        ${props.ttDate.secondTeam.venue === 0 ? "(Heimspiel)" : "(Auswärtsspiel)"}`}
+                                                    </td> : <td></td>}
+                    </tr>
+                    <tr>
+                    <td align="center" colSpan={2}> 
+                        <ButtonGroup aria-label="Options">
+                            <CustomButton dateID={props.ttDate.id} buttonID={"ja"} handler={setRadioValue} radioValue={radioValue} />
+                            <CustomButton dateID={props.ttDate.id} buttonID={"nein"} handler={setRadioValue} radioValue={radioValue} />
+                            <CustomButton dateID={props.ttDate.id} buttonID={"vielleicht"} handler={setRadioValue} radioValue={radioValue} />
+                        </ButtonGroup>
+                    </td>
+                    </tr>
+                </tbody>
             </Table>
-        </>
-        )
+        </Fade>
+        );
 };
 export default Date;

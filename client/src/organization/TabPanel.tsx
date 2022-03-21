@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useState } from "react"
-import { Tab, Tabs } from "react-bootstrap"
+import { Container, Tab, Tabs } from "react-bootstrap"
 import { TTDate } from "../../../shared/types";
 import { fetchDates } from "../main";
 
@@ -21,15 +21,17 @@ const TabPanel = () => {
         SetLoading(false);
     }
     return (
-        <Tabs defaultActiveKey="insert" id="uncontrolled-tab-example" className="mb-3" onSelect={(e) => e === "overview" ? updateGameEntries() : undefined }>
-            <Tab eventKey="insert" title="Eintragen">
-                <Insert />
-            </Tab>
-            <Tab eventKey="overview" title="Überblick" onClick={(e) => updateGameEntries()}>
-                <Overview ttDates={ttDates} loading={loading}/>
-            </Tab>  
-                
-        </Tabs>
+        <Container fluid="md">
+            <Tabs defaultActiveKey="insert" id="uncontrolled-tab-example" className="mb-3" onSelect={(e) => e === "overview" ? updateGameEntries() : undefined }>
+                <Tab eventKey="insert" title="Eintragen">
+                    <Insert />
+                </Tab>
+                <Tab eventKey="overview" title="Überblick" onClick={(e) => updateGameEntries()}>
+                    <Overview ttDates={ttDates} loading={loading}/>
+                </Tab>  
+                    
+            </Tabs>
+        </Container>
         )
 };
 

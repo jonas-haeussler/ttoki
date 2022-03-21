@@ -1,17 +1,1 @@
-{
-    "saison":"21-22",
-    "round":"vr",
-    "vereinId":"15043",
-    "teams":[
-        {
-            "league":"Herren-Bezirksklasse-Gr-1",
-            "groupId":"397348",
-            "teamId":"2516687"
-        },
-        {
-            "league":"Herren-Kreisliga-B-Gr-1",
-            "groupId":"397188",
-            "teamId":"2515123"
-        }
-    ] 
-}
+{"saison":"21-22","round":"vr","vereinId":"15043","teams":[{"league":"Herren-Bezirksklasse-Gr-1","groupId":"397348","teamId":"2516687","teamName":"TSG-Oberkirchberg","enemies":[{"enemyId":"2517275","enemyName":"FC-Strass-II"},{"enemyId":"2516011","enemyName":"TSF-Ludwigsfeld"},{"enemyId":"2517071","enemyName":"TTC-Senden-Hoell"},{"enemyId":"2516077","enemyName":"TSV-Illertissen"},{"enemyId":"2515553","enemyName":"TSV-Holzheim-II"},{"enemyId":"2515830","enemyName":"TSV-Herrlingen-III"},{"enemyId":"2514497","enemyName":"TSV-Neu-Ulm-II"},{"enemyId":"2516687","enemyName":"TSG-Oberkirchberg"},{"enemyId":"2515763","enemyName":"SV-Thalfingen"}]},{"league":"Herren-Kreisliga-B-Gr-1","groupId":"397188","teamId":"2515123","teamName":"TSG-Oberkirchberg-II","enemies":[{"enemyId":"2517259","enemyName":"SC-Voehringen-II"},{"enemyId":"2514921","enemyName":"TSF-Ludwigsfeld-III"},{"enemyId":"2517370","enemyName":"SV-Nersingen"},{"enemyId":"2516843","enemyName":"TTC-Reutti-II"},{"enemyId":"2515123","enemyName":"TSG-Oberkirchberg-II"},{"enemyId":"2516127","enemyName":"TSV-Illertissen-II"},{"enemyId":"2515396","enemyName":"SV-Pfaffenhofen-II"},{"enemyId":"2515361","enemyName":"TSV-Pfuhl-II"}]}]}

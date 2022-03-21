@@ -2,7 +2,7 @@
 
 import {google, sheets_v4, drive_v3} from 'googleapis';
 import {DateTime, Duration} from 'luxon';
-import {Game, Option, TTDates, TTDate, Venue, GoogleConfig, Player} from '../shared/types';
+import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from '../shared/types';
 import {v4 as uuid} from 'uuid';
 import {readFileSync, writeFileSync} from 'fs';
 
@@ -115,7 +115,7 @@ export async function createNewSpreadsheet():Promise<string|undefined> {
  * Gets the players currently available in the Google spreadsheet
  * @return {Promise<string | undefined>} The currently available players
  */
-export async function getPlayers():Promise<string[] | undefined> {
+export async function getAllPlayers():Promise<string[] | undefined> {
   const sheets = await getGoogleSheets();
   const googleConfig = getGoogleConfig();
   try {

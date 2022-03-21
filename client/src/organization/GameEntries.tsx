@@ -2,6 +2,7 @@ import React from "react";
 import { TTDate } from "../../../shared/types";
 import Loader from "../Loader";
 import { DateTime } from "luxon";
+const Fade = require("react-reveal/Fade");
 
 
 
@@ -12,7 +13,7 @@ const GameEntries = (props: {ttDates:TTDate[], loading:boolean}) => {
     return (
         <>
         {props.loading || props.ttDates === [] ? <tr><td colSpan={3}><Loader/></td></tr> : props.ttDates.map(ttDate => {
-            return <>
+            return <Fade left delay={props.ttDates.indexOf(ttDate) * 100}>
                 <tr><td rowSpan={2} style={{verticalAlign: "middle"}}>{DateTime.fromISO(ttDate.date).toFormat("dd.MM.yy")}</td>
                     <td>
                         {`${ttDate.firstTeam ? ttDate.firstTeam?.enemy: ""} 
@@ -27,7 +28,7 @@ const GameEntries = (props: {ttDates:TTDate[], loading:boolean}) => {
                 <tr><td colSpan={2}>{ttDate.availablePlayers === undefined || ttDate.availablePlayers.length === 0 ? "Bisher keine Spieler..." : ttDate.availablePlayers.map(
                     (player) => player.split(" ")[0] + (ttDate.availablePlayers.indexOf(player) !== ttDate.availablePlayers.length -1 ? ", ": ""))
                 }</td></tr>
-                </>
+                </Fade>
             }
         )}
         </>

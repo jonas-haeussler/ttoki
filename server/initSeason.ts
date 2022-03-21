@@ -1,11 +1,11 @@
-import {Config, Game, Tables, TTDate, TTDates, Venue} from '../shared/types';
-import fetch from 'node-fetch';
-import parse, {HTMLElement} from 'node-html-parser';
+import {Game, TTDate, TTDates, Venue} from '../shared/types';
 import {addNewGoogleConfig, createNewSpreadsheet, postTable} from './googleUtils';
 import {DateTime} from 'luxon';
 import {v4 as uuid} from 'uuid';
-import {readFileSync} from 'fs';
-import {fetchTeams, getTablesFromHTML, login} from './myTTUtils';
+import {fetchTeams, getTablesFromHTML} from './myTTUtils';
+import parse from 'node-html-parser';
+import {getPlayersForTeam, readTeamConfig, writeEnemies} from './utils';
+import fetch from 'node-fetch';
 
 
 /**
@@ -28,21 +28,6 @@ function getGamesForTeam(table: string[][]):{date:string, game:Game}[] {
         venue: venue,
       };
       arr.push({date: date.split(' ')[1], game: game});
-    }
-  }
-  return arr;
-}
-/**
- *
- * @param table
- * @returns
- */
-function getPlayersForTeam(table: string[][]):string[] {
-  const arr = [];
-  for (const entry of table) {
-    if (entry.length > 0) {
-      const name = entry[1];
-      arr.push(name);
     }
   }
   return arr;
@@ -79,7 +64,7 @@ async function loadMatches():Promise<TTDates> {
       firstDate = DateTime.fromFormat(gameFirstTeam.value.date, 'dd.MM.yy');
     }
     if (gameSecondTeam.value) {
-      secondDate = DateTime.fromFormat(gameSecondTeam.value.date, 'dd.MM.yy')
+      secondDate = DateTime.fromFormat(gameSecondTeam.value.date, 'dd.MM.yy');
     }
     const entry:Record<string, any> = {
       id: uuid(),
@@ -125,7 +110,6 @@ async function initTable() {
     const secondTeamEnemies = [];
     const secondTeamTimes = [];
     const secondTeamVenues = [];
-    console.log(ttDates.ttDates);
     for (const ttDate of ttDates.ttDates) {
       dateValues.push(ttDate.date);
       firstTeamEnemies.push(ttDate.firstTeam?.enemy ? ttDate.firstTeam.enemy : '');
@@ -137,7 +121,6 @@ async function initTable() {
       secondTeamVenues.push(ttDate.secondTeam?.venue !== undefined ? venue : '');
       secondTeamTimes.push(ttDate.secondTeam?.time ? ttDate.secondTeam.time : '');
     }
-    console.log(ttDates.allPlayers);
     for (let i = 0; i < ttDates.allPlayers.length; i++) {
       const currentPlayer = ttDates.allPlayers[i];
       if (ttDates.allPlayers.slice(i + 1).includes(currentPlayer)) {
@@ -154,4 +137,48 @@ async function initTable() {
         }));
   }
 }
+
+/**
+ * 
+ */
+async function findEnemies(teamIndex:number):Promise<{enemyId:string, enemyName:string}[]> {
+  /**
+   * 
+   * @param link 
+   */
+  function parseLink(link:string):{enemyId:string, enemyName:string} | undefined {
+    const split = link.split('/');
+    for (let i = 0; i < split.length; i++) {
+      if (split[i].toLowerCase() === 'mannschaft') {
+        return {enemyId: split[i + 1], enemyName: split[i + 2]};
+      }
+    }
+  }
+  const config = readTeamConfig();
+  const response = await fetch(`https://www.mytischtennis.de/clicktt/TTBW/` +
+  `${config.saison}/ligen/${config.teams[teamIndex].league}/gruppe/` +
+  `${config.teams[teamIndex].groupId}/tabelle/${config.round}`);
+  const html = parse(await response.text());
+  const table = html.querySelector('table > tbody');
+  const rows = table?.querySelectorAll('tr') || [];
+  const enemies:{enemyId:string, enemyName:string}[] = [];
+  for (const row of rows) {
+    const cell = row.querySelector('td > a');
+    const link = cell?.getAttribute('href');
+    if (link) {
+      const enemy = parseLink(link);
+      if (enemy) {
+        enemies.push(enemy);
+      }
+    }
+  }
+  return enemies;
+}
+/**
+ * 
+ */
+async function initAllEnemies() {
+  writeEnemies([await findEnemies(0), await findEnemies(1)]);
+}
 initTable();
+initAllEnemies();

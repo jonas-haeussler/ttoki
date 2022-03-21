@@ -1,8 +1,8 @@
 .loading-container {
   width: 100px;
   height: 100px;
-  left: 40%;
-  right: 40%;
+  left: 45%;
+  right: 45%;
   position: relative;
   -webkit-animation: rotate 3s linear infinite;
           animation: rotate 3s linear infinite;
@@ -135,7 +135,6 @@
 }
 .loading {
       background-color: lightgrey;
-      position: relative;
       min-height: 6cm;
       width: 90%;
       height: 90%;

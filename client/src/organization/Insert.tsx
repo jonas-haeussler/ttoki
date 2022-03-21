@@ -85,7 +85,7 @@ const Insert = () => {
         </Form>
          
         {dates.map(date => {
-            return <Date ttDate={date} />
+            return <Date ttDate={date} delay={200 + dates.indexOf(date) * 50} />
         })}
         { loading ? <Loader/> : <></> }
         </>
