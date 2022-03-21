@@ -15,7 +15,7 @@ const Overview = (props: {ttDates:TTDate[], loading:boolean}) => {
                 </tr>
               </thead>
               <tbody id="game-entries">
-                <GameEntries ttDates={props.ttDates} loading={true} />
+                <GameEntries ttDates={props.ttDates} loading={props.loading} />
               </tbody>
           </Table>
     )
