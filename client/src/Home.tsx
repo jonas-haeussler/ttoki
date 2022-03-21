@@ -12,12 +12,12 @@ const MenuItem = (props: {imagePath:string, title:string, text?:string, link:str
             <Card.Link href={props.link} style={{textDecoration:"none", color:"#212529"}}>
                 <Card style={{width: "100%"}} className="shadow-lg p-3 mb-4 bg-body rounded">
                     <Card.Img variant="top" src={props.imagePath} style={{width: "40%", height: "40%", margin: "auto"}}/>
-                        <Card.Body>
-                            <Card.Title style={{textAlign:"center"}}>{props.title}</Card.Title>
-                            <Card.Text>
+                    <Card.Body style={{padding:"1rem 0"}}>
+                        <Card.Title style={{textAlign:"center"}}>{props.title}</Card.Title>
+                        <Card.Text>
                                 {props.text}
-                            </Card.Text>
-                        </Card.Body>
+                        </Card.Text>
+                    </Card.Body>
                 </Card>
             </Card.Link>
             </Fade>
