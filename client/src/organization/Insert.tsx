@@ -74,7 +74,7 @@ const Insert = () => {
                             </>
                         )
                     }
-                    <FormControl placeholder="Vorname, Nachname" list="players" onChange={(e) => doValidate(e)}/>
+                    <FormControl placeholder="Vorname Nachname" list="players" onChange={(e) => doValidate(e)}/>
                 </InputGroup>
                 <datalist id="players">
                         {
@@ -85,7 +85,7 @@ const Insert = () => {
         </Form>
          
         {dates.map(date => {
-            return <Date ttDate={date} delay={200 + dates.indexOf(date) * 50} />
+            return <Date ttDate={date} delay={0} />
         })}
         { loading ? <Loader/> : <></> }
         </>

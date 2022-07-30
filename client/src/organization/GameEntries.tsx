@@ -13,7 +13,7 @@ const GameEntries = (props: {ttDates:TTDate[], loading:boolean}) => {
     return (
         <>
         {props.loading || props.ttDates === [] ? <tr><td colSpan={3}><Loader/></td></tr> : props.ttDates.map(ttDate => {
-            return <Fade left delay={props.ttDates.indexOf(ttDate) * 100}>
+            return <Fade bottom delay={0}>
                 <tr><td rowSpan={2} style={{verticalAlign: "middle"}}>{DateTime.fromISO(ttDate.date).toFormat("dd.MM.yy")}</td>
                     <td>
                         {`${ttDate.firstTeam ? ttDate.firstTeam?.enemy: ""} 

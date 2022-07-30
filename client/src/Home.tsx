@@ -81,7 +81,7 @@ const Home = () => {
                         <MenuItem imagePath="./kalender.png" title="Planung" text="" link="/planning" delay={500} />
                         <MenuItem imagePath="./statistiken.png" title="Statistiken" link="/statistics" delay={700} />
                         <MenuItem imagePath="./upcoming.png" title="Kommende" link="/upcoming" delay={900}/>
-                        <MenuItem imagePath="./galerie.png" title="Ping Pong" link="/" delay={1100}/>
+                        <MenuItem imagePath="./galerie.png" title="Ping Pong" link="/pingpong" delay={1100}/>
                 </Row>
             </Container>
       </>

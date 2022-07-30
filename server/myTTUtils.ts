@@ -1,10 +1,9 @@
-import { writeFileSync } from 'fs';
 import {DateTime} from 'luxon';
 import fetch, {RequestInit, Response} from 'node-fetch';
 import parse, {HTMLElement} from 'node-html-parser';
 import {Config, Player, Tables, Team} from '../shared/types';
 import {getDates, getAllPlayers} from './googleUtils';
-import {getPlayersForTeam, readTeamConfig, writeEnemies} from './utils';
+import {getPlayersForTeam, readTeamConfig} from './utils';
 
 /**
  * Login for mytischtennis
@@ -12,9 +11,9 @@ import {getPlayersForTeam, readTeamConfig, writeEnemies} from './utils';
  */
 export async function login(): Promise<RequestInit> {
   /**
-   * 
-   * @param response 
-   * @returns 
+   *
+   * @param response
+   * @returns
    */
   function parseCookies(response:Response) {
     const raw = response.headers.raw()['set-cookie'];
@@ -57,12 +56,12 @@ export async function login(): Promise<RequestInit> {
   }
 }
 /**
- * 
- * @param saison 
- * @param league 
- * @param groupId 
- * @param teamId 
- * @param round 
+ *
+ * @param saison
+ * @param league
+ * @param groupId
+ * @param teamId
+ * @param round
  */
 async function fetchTeam(saison:string,
     league:string,
@@ -76,7 +75,7 @@ async function fetchTeam(saison:string,
 }
 
 /**
- * 
+ *
  */
 export async function fetchTeams():Promise<Response[]> {
   const config:Config = readTeamConfig();
@@ -102,9 +101,9 @@ export async function fetchTeams():Promise<Response[]> {
  */
 export function getTablesFromHTML(html: string):Tables {
   /**
-   * 
-   * @param rows 
-   * @returns 
+   *
+   * @param rows
+   * @returns
    */
   function parseTable(rows: HTMLElement[]):string[][] {
     const rowData = [];
@@ -137,9 +136,9 @@ export function getTablesFromHTML(html: string):Tables {
 }
 
 /**
- * 
- * @param players 
- * @param html 
+ *
+ * @param players
+ * @param html
  */
 function getTTRForPlayers(players:{name:string, ttr:number, qttr:number}[],
     html:string, quartal:boolean):{name:string, ttr:number, qttr:number}[] {
@@ -167,15 +166,14 @@ function getTTRForPlayers(players:{name:string, ttr:number, qttr:number}[],
 }
 
 /**
- * 
- * @returns 
+ *
+ * @returns
  */
 function parsePlayerStats(ttrs:Player[],
     gamestatsTable:string[][]) {
   const players:Player[] = [];
   for (const player of ttrs) {
     let team:typeof player.team = 1;
-    let position = player.position;
     let actions = player.actions;
     let wins = player.wins;
     let loses = player.loses;
@@ -187,7 +185,6 @@ function parsePlayerStats(ttrs:Player[],
     if (row) {
       const temp = parseInt(row[0].split('.')[0]);
       team = temp === 1 || temp === 2 || temp === 3 || temp === 4 || temp === 5 || temp === 6 || temp === 7 ? temp : 1;
-      position = parseInt(row[0].split('.')[1]);
       actions += parseInt(row[2]);
       const balance = row[9];
       wins += parseInt(balance.split(':')[0]);
@@ -195,7 +192,6 @@ function parsePlayerStats(ttrs:Player[],
     }
     players.push({
       team: team,
-      position: position,
       name: player.name,
       ttr: player.ttr,
       qttr: player.qttr,
@@ -207,8 +203,8 @@ function parsePlayerStats(ttrs:Player[],
 }
 
 /**
- * 
- * @param ttrs 
+ *
+ * @param ttrs
  */
 async function getPlayerStats(
     ttrs:Player[]):Promise<Player[]> {
@@ -221,9 +217,9 @@ async function getPlayerStats(
 }
 
 /**
- * 
- * @param quartal 
- * @returns 
+ *
+ * @param quartal
+ * @returns
  */
 function getTTRLink(quartal:boolean, groupId?:string) {
   if (groupId) {
@@ -237,8 +233,8 @@ function getTTRLink(quartal:boolean, groupId?:string) {
 }
 
 /**
- * 
- * @returns 
+ *
+ * @returns
  */
 async function getStatisticsForPlayers(loginOpt:RequestInit,
     players:{name:string,
@@ -256,7 +252,6 @@ async function getStatisticsForPlayers(loginOpt:RequestInit,
     playerObjects.push({
       ...elem,
       team: 1,
-      position: 0,
       actions: 0,
       wins: 0,
       loses: 0,
@@ -266,7 +261,7 @@ async function getStatisticsForPlayers(loginOpt:RequestInit,
 }
 
 /**
- * 
+ *
  */
 export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]> {
   const players = await getAllPlayers();
@@ -278,8 +273,8 @@ export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]>
 }
 
 /**
- * 
- * @param teamName 
+ *
+ * @param teamName
  */
 async function getEnemyPlayers(loginOpt:RequestInit,
     teamName:string):Promise<Player[] | undefined> {
@@ -313,15 +308,23 @@ async function getEnemyPlayers(loginOpt:RequestInit,
 }
 
 /**
- * 
- * @param loginOpt 
+ *
+ * @param loginOpt
  */
 export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], enemies:Team[]}> {
   const ttDates = (await getDates([]))?.ttDates;
-  const nextDate = ttDates?.find((d) => {
-    return DateTime.fromFormat(d.date, 'dd.MM.yy').diffNow().toMillis() > 0 || true;
+  const nextDateFirstTeam = ttDates?.find((d) => {
+    if (d.firstTeam) {
+      return DateTime.fromISO(d.date).diffNow().toMillis() > 0;
+    }
   });
-  const playerObjects = nextDate?.availablePlayers.map((player) => {
+  const nextDateSecondTeam = ttDates?.find((d) => {
+    if (d.secondTeam) {
+      return DateTime.fromISO(d.date).diffNow().toMillis() > 0;
+    }
+  });
+  console.log(nextDateFirstTeam, nextDateSecondTeam);
+  let playerObjects = nextDateFirstTeam?.availablePlayers.map((player) => {
     return {name: player, ttr: 0, qttr: 0};
   });
   const allies:Team[] = [];
@@ -331,19 +334,26 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
       name: 'TSG Oberkirchberg',
       members: (await getStatisticsForPlayers(loginOpt, playerObjects)).slice(0, 7),
     });
+  }
+  playerObjects = nextDateFirstTeam?.availablePlayers.map((player) => {
+    return {name: player, ttr: 0, qttr: 0};
+  });
+  if (playerObjects) {
     allies.push({
       name: 'TSG Oberkirchberg II',
       members: (await getStatisticsForPlayers(loginOpt, playerObjects)).slice(7),
     });
   }
-  if (nextDate) {
+  if (nextDateFirstTeam) {
     enemies.push({
-      name: nextDate.firstTeam.enemy,
-      members: await getEnemyPlayers(loginOpt, nextDate.firstTeam.enemy) || [],
+      name: nextDateFirstTeam.firstTeam.enemy,
+      members: await getEnemyPlayers(loginOpt, nextDateFirstTeam.firstTeam.enemy) || [],
     });
+  }
+  if (nextDateSecondTeam) {
     enemies.push({
-      name: nextDate.secondTeam.enemy,
-      members: await getEnemyPlayers(loginOpt, nextDate.secondTeam.enemy) || [],
+      name: nextDateSecondTeam.secondTeam.enemy,
+      members: await getEnemyPlayers(loginOpt, nextDateSecondTeam.secondTeam.enemy) || [],
     });
   }
   return {allies: allies, enemies: enemies};

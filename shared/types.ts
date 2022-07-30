@@ -40,7 +40,6 @@ export interface Game {
 }
 export interface Player {
   readonly team:1 | 2 | 3 | 4 | 5 | 6 | 7,
-  readonly position:number,
   readonly name:string,
   readonly actions:number,
   readonly wins:number,

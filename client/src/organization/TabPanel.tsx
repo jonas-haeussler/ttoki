@@ -21,7 +21,7 @@ const TabPanel = () => {
         SetLoading(false);
     }
     return (
-        <Container fluid="md">
+        <Container fluid="md" className="content" style={{minHeight: "500px"}}>
             <Tabs defaultActiveKey="insert" id="uncontrolled-tab-example" className="mb-3" onSelect={(e) => e === "overview" ? updateGameEntries() : undefined }>
                 <Tab eventKey="insert" title="Eintragen">
                     <Insert />

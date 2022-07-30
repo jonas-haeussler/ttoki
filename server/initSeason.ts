@@ -53,6 +53,7 @@ async function loadMatches():Promise<TTDates> {
   const gamesSecondTeam = getGamesForTeam(tablesSecondTeam.playingPlanDesktop)[Symbol.iterator]();
   const playersFirstTeam = getPlayersForTeam(tablesFirstTeam.gamestatsTable);
   const playersSecondTeam = getPlayersForTeam(tablesSecondTeam.gamestatsTable);
+  
   let gameFirstTeam = gamesFirstTeam.next();
   let gameSecondTeam = gamesSecondTeam.next();
   const entries:TTDate[] = [];
@@ -71,12 +72,14 @@ async function loadMatches():Promise<TTDates> {
       activePlayers: [],
       availablePlayers: [],
     };
-    if (firstDate.startOf('day') <= secondDate.startOf('day')) {
+    if (gameFirstTeam.value &&
+       (!gameSecondTeam.value || firstDate.startOf('day') <= secondDate.startOf('day'))) {
       entry.date = firstDate.toFormat('dd.MM.yy');
       entry.firstTeam = gameFirstTeam.value.game;
       gameFirstTeam = gamesFirstTeam.next();
     }
-    if (firstDate.startOf('day') >= secondDate.startOf('day')) {
+    if (gameSecondTeam.value && 
+      (!gameFirstTeam.value || firstDate.startOf('day') >= secondDate.startOf('day'))) {
       entry.date = secondDate.toFormat('dd.MM.yy');
       entry.secondTeam = gameSecondTeam.value.game;
       gameSecondTeam = gamesSecondTeam.next();

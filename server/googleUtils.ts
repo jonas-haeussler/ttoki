@@ -223,6 +223,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
             option = activePlayers.map(
                 (activePlayer) => {
                   let entry = entries[allPlayers.indexOf(activePlayer)][i];
+                  if (entry === undefined) return '';
                   entry = entry.toLowerCase();
                   return entry;
                 }).reduce(

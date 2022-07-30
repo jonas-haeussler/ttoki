@@ -42,7 +42,7 @@ const Date = (props: {ttDate:TTDate, delay:number}) => {
 
     }, [radioValue]);
     return (
-        <Fade left delay={props.delay}>
+        <Fade bottom delay={props.delay}>
             <Table striped bordered hover >
                 <thead>
                     <tr><th colSpan={2} style={{textAlign:"center"}}><h2>{DateTime.fromISO(props.ttDate.date).toFormat("dd.MM.yyyy")}</h2></th></tr>
