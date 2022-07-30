@@ -16,7 +16,8 @@ const Heading = (props: {title:string, subtitle:string}) => {
 }
 
 const PingPong = () => {
-    return <><h1 style={{textAlign: "center", marginTop:"100px"}}>Noch in Arbeit :)</h1></>
+    return <><h1 style={{textAlign: "center", marginTop:"100px"}}>Noch in Arbeit 😄</h1></>
+    /*
     return (
         <Container fluid="md" className="content">
             <h1 style={{marginTop:"2%"}}>Best Of Ping Pong</h1>
@@ -69,5 +70,6 @@ const PingPong = () => {
             </Row>
         </Container>
     );
+    */
 } 
 export default PingPong;
