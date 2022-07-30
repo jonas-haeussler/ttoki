@@ -6,7 +6,7 @@ import TabPanel from  "./organization/TabPanel";
 import Statistics from "./statistics/Statistics";
 import Upcoming from "./statistics/Upcoming";
 import Home from './Home';
-import PingPong from './pingpong/PingPong'
+import PingPong from './fun/PingPong'
 
 
 const App = () => {
