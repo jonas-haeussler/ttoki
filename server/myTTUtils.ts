@@ -324,24 +324,30 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
     }
   });
   console.log(nextDateFirstTeam, nextDateSecondTeam);
-  let playerObjects = nextDateFirstTeam?.availablePlayers.map((player) => {
+  const playerObjectsFirst = nextDateFirstTeam?.availablePlayers.map((player) => {
     return {name: player, ttr: 0, qttr: 0};
   });
   const allies:Team[] = [];
   const enemies:Team[] = [];
-  if (playerObjects) {
+  if (playerObjectsFirst) {
     allies.push({
       name: 'TSG Oberkirchberg',
-      members: (await getStatisticsForPlayers(loginOpt, playerObjects)).slice(0, 7),
+      members: (await getStatisticsForPlayers(loginOpt, playerObjectsFirst)).slice(0, 7),
     });
   }
-  playerObjects = nextDateFirstTeam?.availablePlayers.map((player) => {
+  const playerObjectsSecond = nextDateSecondTeam?.availablePlayers.map((player) => {
     return {name: player, ttr: 0, qttr: 0};
   });
-  if (playerObjects) {
+  if (playerObjectsSecond) {
+    let members;
+    if (nextDateFirstTeam?.date === nextDateSecondTeam?.date) {
+      members = (await getStatisticsForPlayers(loginOpt, playerObjectsSecond)).slice(7);
+    } else {
+      members = (await getStatisticsForPlayers(loginOpt, playerObjectsSecond)).slice(0, 7);
+    }
     allies.push({
       name: 'TSG Oberkirchberg II',
-      members: (await getStatisticsForPlayers(loginOpt, playerObjects)).slice(7),
+      members: members,
     });
   }
   if (nextDateFirstTeam) {
