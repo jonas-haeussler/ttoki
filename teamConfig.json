@@ -1,1 +1,108 @@
-{"saison":"22-23","round":"vr","vereinId":"15043","teams":[{"league":"Herren-Bezirksklasse-Gr-1","groupId":"415408","teamId":"2590414","teamName":"TSG-Oberkirchberg","enemies":[{"enemyId":"2589779","enemyName":"TSF-Ludwigsfeld-II"},{"enemyId":"2590414","enemyName":"TSG-Oberkirchberg"},{"enemyId":"2589216","enemyName":"SF-Rammingen"},{"enemyId":"2590869","enemyName":"SC-Staig-IV"},{"enemyId":"2592915","enemyName":"VfB-Ulm"},{"enemyId":"2589434","enemyName":"TTC-Senden-Hoell"},{"enemyId":"2590964","enemyName":"TSV-Holzheim-II"},{"enemyId":"2592784","enemyName":"TSV-Illertissen"},{"enemyId":"2589867","enemyName":"TSV-Herrlingen-III"},{"enemyId":"2591980","enemyName":"TSV-Neu-Ulm-II"}]},{"league":"Herren-Kreisliga-B-Gr-2","groupId":"415733","teamId":"2592305","teamName":"TSG-Oberkirchberg-II","enemies":[{"enemyId":"2592301","enemyName":"TSG-Rottenacker"},{"enemyId":"2589912","enemyName":"SC-Staig-V"},{"enemyId":"2592358","enemyName":"SV-Unterstadion-II"},{"enemyId":"2590114","enemyName":"TTC-Ehingen-II"},{"enemyId":"2592305","enemyName":"TSG-Oberkirchberg-II"},{"enemyId":"2591671","enemyName":"SG-OEpfingen-III"},{"enemyId":"2589866","enemyName":"SpVgg-Obermarchtal"},{"enemyId":"2593164","enemyName":"TSV-Erbach-III"}]}]}
+{
+	"saison": "22-23",
+	"round": "vr",
+	"vereinId": "15043",
+	"teams": [
+		{
+			"league": "Herren-Bezirksklasse-Gr-1",
+			"groupId": "415408",
+			"teamId": "2590414",
+			"teamName": "TSG-Oberkirchberg",
+			"enemies": [
+				{
+					"enemyId": "2590964",
+					"enemyName": "TSV-Holzheim-II",
+					"enemyClubId": "15026"
+				},
+				{
+					"enemyId": "2589867",
+					"enemyName": "TSV-Herrlingen-III",
+					"enemyClubId": "15025"
+				},
+				{
+					"enemyId": "2592784",
+					"enemyName": "TSV-Illertissen",
+					"enemyClubId": "15029"
+				},
+				{
+					"enemyId": "2592915",
+					"enemyName": "VfB-Ulm",
+					"enemyClubId": "15060"
+				},
+				{
+					"enemyId": "2590869",
+					"enemyName": "SC-Staig-IV",
+					"enemyClubId": "15056"
+				},
+				{
+					"enemyId": "2590414",
+					"enemyName": "TSG-Oberkirchberg",
+					"enemyClubId": "15043"
+				},
+				{
+					"enemyId": "2589434",
+					"enemyName": "TTC-Senden-Hoell",
+					"enemyClubId": "15055"
+				},
+				{
+					"enemyId": "2589779",
+					"enemyName": "TSF-Ludwigsfeld-II",
+					"enemyClubId": "15034"
+				},
+				{
+					"enemyId": "2589216",
+					"enemyName": "SF-Rammingen",
+					"enemyClubId": "15048"
+				},
+				{
+					"enemyId": "2591980",
+					"enemyName": "TSV-Neu-Ulm-II",
+					"enemyClubId": "15041"
+				}
+			]
+		},
+		{
+			"league": "Herren-Kreisliga-B-Gr-2",
+			"groupId": "415733",
+			"teamId": "2592305",
+			"teamName": "TSG-Oberkirchberg-II",
+			"enemies": [
+				{
+					"enemyId": "2589912",
+					"enemyName": "SC-Staig-V",
+					"enemyClubId": "15056"
+				},
+				{
+					"enemyId": "2593164",
+					"enemyName": "TSV-Erbach-III",
+					"enemyClubId": "15019"
+				},
+				{
+					"enemyId": "2589866",
+					"enemyName": "SpVgg-Obermarchtal",
+					"enemyClubId": "15044"
+				},
+				{
+					"enemyId": "2590114",
+					"enemyName": "TTC-Ehingen-II",
+					"enemyClubId": "15017"
+				},
+				{
+					"enemyId": "2592301",
+					"enemyName": "TSG-Rottenacker",
+					"enemyClubId": "15051"
+				},
+				{
+					"enemyId": "2592358",
+					"enemyName": "SV-Unterstadion-II",
+					"enemyClubId": "15062"
+				},
+				{
+					"enemyId": "2592305",
+					"enemyName": "TSG-Oberkirchberg-II",
+					"enemyClubId": "15043"
+				}
+			]
+		}
+	]
+}

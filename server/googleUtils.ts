@@ -53,7 +53,7 @@ async function getGoogleSheets():Promise<sheets_v4.Sheets> {
  */
 function getPlayerRange(playerIndex:number, dateIndex:number):string {
   if (dateIndex !== undefined) {
-    return `R[${8 + playerIndex}]C[${2 + dateIndex}]`;
+    return `R[${8 + playerIndex}]C[${3 + dateIndex}]`;
   }
   return `R[${8 + playerIndex}]`;
 }
@@ -113,9 +113,11 @@ export async function createNewSpreadsheet():Promise<string|undefined> {
 
 /**
  * Gets the players currently available in the Google spreadsheet
- * @return {Promise<string | undefined>} The currently available players
+ * @return {Promise<{team:string, name:string, nickName:string}[] | undefined>}
+ * The currently available players
  */
-export async function getAllPlayers():Promise<string[] | undefined> {
+export async function getAllPlayers():
+Promise<{team:string, name:string, nickName:string}[] | undefined> {
   const sheets = await getGoogleSheets();
   const googleConfig = getGoogleConfig();
   try {
@@ -124,7 +126,9 @@ export async function getAllPlayers():Promise<string[] | undefined> {
       range: googleConfig.ranges.players,
     })).data;
     if (data.values !== undefined && data.values !== null) {
-      const players:string[] = data.values.map((p) => p[0]);
+      const players:{team:string, name:string, nickName:string}[] = data.values.map((p) => {
+        return {team: p[0], name: p[1], nickName: p[2]};
+      });
       return players;
     }
   } catch (err) {
@@ -192,7 +196,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
     let dates:string[] = [];
     let matchesFirstTeam:string[][] = [];
     let matchesSecondTeam:string[][] = [];
-    let allPlayers:string[] = [];
+    let allPlayers:{team:string, name:string, nickName:string}[] = [];
     let entries:string[][] = [];
     if (data[0].values !== undefined && data[0].values !== null) {
       dates = data[0].values[0];
@@ -204,25 +208,27 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
       matchesSecondTeam = data[2].values;
     }
     if (data[3].values !== undefined && data[3].values !== null) {
-      allPlayers = data[3].values.map((p) => p[0]);
+      allPlayers = data[3].values.map((p) => {
+        return {team: p[0], name: p[1], nickName: p[2]};
+      });
     }
     if (data[4].values !== undefined && data[4].values !== null) {
       entries = data[4].values;
     }
-
     const ttDates:TTDate[] = [];
     for (let i = 0; i < dates.length; i++) {
       const firstTeam:Game | null = getGame(matchesFirstTeam, i, dates);
       const secondTeam:Game | null = getGame(matchesSecondTeam, i, dates);
       let option:Option = Option.Dunno;
       if (activePlayers && activePlayers.length > 0 && entries && entries.length > 0) {
-        const activePlayerIndex = allPlayers.indexOf(activePlayers[0]);
+        const activePlayerIndex = allPlayers.map((player) => player.name).indexOf(activePlayers[0]);
         if (entries.length > activePlayerIndex && entries[activePlayerIndex].length > i) {
           option = entries[activePlayerIndex][i].toLowerCase() as Option;
           if (activePlayers.length > 1) {
             option = activePlayers.map(
                 (activePlayer) => {
-                  let entry = entries[allPlayers.indexOf(activePlayer)][i];
+                  let entry = entries[allPlayers.map((player) => player.name)
+                      .indexOf(activePlayer)][i];
                   if (entry === undefined) return '';
                   entry = entry.toLowerCase();
                   return entry;
@@ -235,10 +241,17 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
       if (!(Object.values(Option).some((v) => v === option))) {
         option = Option.Dunno;
       }
-      const availablePlayers:string[] = [];
+      const availablePlayers:{team:string, name:string, nickName:string}[] = [];
       for (let j = 0; j < allPlayers.length; j++) {
-        if (entries.length > j && entries[j].length > i && entries[j][i] === Option.Yes) {
-          availablePlayers.push(allPlayers[j]);
+        if (entries.length > j && entries[j].length > i) {
+          if (entries[j][i] === Option.Yes) {
+            availablePlayers.push(allPlayers[j]);
+          } else if (entries[j][i] === Option.Maybe) {
+            const player = {team: allPlayers[j].team,
+              name: allPlayers[j].name,
+              nickName: allPlayers[j].nickName + ' (vielleicht)'};
+            availablePlayers.push(player);
+          }
         }
       }
       const ttDate:Record<string, any> = {
@@ -274,7 +287,7 @@ export async function postPlayer(ttDate:TTDate):Promise<string> {
     const dates = await getDates(ttDate.activePlayers);
     let players:string[] = [];
     if (dates) {
-      players = dates.allPlayers;
+      players = dates.allPlayers.map((player) => player.name);
     }
     if (dates && players) {
       const playerRanges = ttDate.activePlayers.map((player) => {

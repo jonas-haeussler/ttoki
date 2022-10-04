@@ -5,6 +5,7 @@ import { TTDate, Game } from "../../../shared/types";
 import { fetchDates } from "../main";
 import Date from "./Date";
 import Loader from "../Loader";
+import { DateTime } from "luxon";
 
 
 
@@ -29,8 +30,9 @@ const Insert = () => {
 
     useEffect(() => {
         const fetchPlayers = async () => {
-            let res = await fetch("/players");
-            let allPlayers = await res.json();
+            const data = await fetch("/players");
+            const res = await data.json();
+            const allPlayers = res.map((el:{team:string, name:string, nickName:string}) => el.name);
             SetAllPlayers(allPlayers);
             console.log(allPlayers);
         }
@@ -50,8 +52,8 @@ const Insert = () => {
     const [loading, SetLoading] = useState<boolean>();
     
     function doValidate(e:any) {
-        let inputElem = e.target as HTMLInputElement;
-        let name = inputElem.value;
+        const inputElem = e.target as HTMLInputElement;
+        const name = inputElem.value;
         if(allPlayers.includes(name)) {
             SetDates([]);
             inputElem.value = "";

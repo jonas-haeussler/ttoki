@@ -24,7 +24,7 @@ export interface TeamConfig {
   readonly groupId:string,
   readonly teamId:string,
   readonly teamName:string,
-  enemies?:{enemyId:string, enemyName:string}[]
+  enemies?:{enemyId:string, enemyName:string, enemyClubId:string}[]
 }
 export interface Config {
   readonly saison:string,
@@ -39,8 +39,9 @@ export interface Game {
   readonly venue:Venue
 }
 export interface Player {
-  readonly team:1 | 2 | 3 | 4 | 5 | 6 | 7,
+  readonly team?:1 | 2 | 3 | 4 | 5 | 6 | 7,
   readonly name:string,
+  readonly nickName?:string,
   readonly actions:number,
   readonly wins:number,
   readonly loses:number,
@@ -55,14 +56,14 @@ export interface Team {
 
 export interface TTDates {
   readonly ttDates:TTDate[],
-  readonly allPlayers:string[]
+  readonly allPlayers:{team:string, name:string, nickName:string}[]
 }
 
 export interface TTDate {
   readonly id:string,
   readonly date:string,
   readonly activePlayers:string[],
-  readonly availablePlayers:string[],
+  readonly availablePlayers:{team:string, name:string, nickName:string}[],
   readonly firstTeam:Game,
   readonly secondTeam:Game,
   option:Option,

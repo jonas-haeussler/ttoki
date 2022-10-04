@@ -16,6 +16,7 @@ const TabPanel = () => {
     const updateGameEntries = async () => {
         SetLoading(true);
         const ttDates:TTDate[] = await fetchDates([]);
+        
         console.log(ttDates);
         SetTTDates(ttDates);
         SetLoading(false);

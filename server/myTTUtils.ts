@@ -3,7 +3,7 @@ import fetch, {RequestInit, Response} from 'node-fetch';
 import parse, {HTMLElement} from 'node-html-parser';
 import {Config, Player, Tables, Team} from '../shared/types';
 import {getDates, getAllPlayers} from './googleUtils';
-import {getPlayersForTeam, readTeamConfig} from './utils';
+import {getPlayersForTeam, readClubs, readTeamConfig} from './utils';
 
 /**
  * Login for mytischtennis
@@ -140,8 +140,9 @@ export function getTablesFromHTML(html: string):Tables {
  * @param players
  * @param html
  */
-function getTTRForPlayers(players:{name:string, ttr:number, qttr:number}[],
-    html:string, quartal:boolean):{name:string, ttr:number, qttr:number}[] {
+function getTTRForPlayers(players:{name:string,
+    ttr:number, qttr:number}[],
+html:string, quartal:boolean):{name:string, ttr:number, qttr:number}[] {
   const root = parse(html);
   const th = root.querySelectorAll('.table-mytt > thead > tr > th');
 
@@ -173,7 +174,6 @@ function parsePlayerStats(ttrs:Player[],
     gamestatsTable:string[][]) {
   const players:Player[] = [];
   for (const player of ttrs) {
-    let team:typeof player.team = 1;
     let actions = player.actions;
     let wins = player.wins;
     let loses = player.loses;
@@ -183,15 +183,13 @@ function parsePlayerStats(ttrs:Player[],
       return el[1].includes(playerNameMod);
     });
     if (row) {
-      const temp = parseInt(row[0].split('.')[0]);
-      team = temp === 1 || temp === 2 || temp === 3 || temp === 4 || temp === 5 || temp === 6 || temp === 7 ? temp : 1;
       actions += parseInt(row[2]);
       const balance = row[9];
       wins += parseInt(balance.split(':')[0]);
       loses += parseInt(balance.split(':')[1]);
     }
     players.push({
-      team: team,
+      team: player.team,
       name: player.name,
       ttr: player.ttr,
       qttr: player.qttr,
@@ -221,15 +219,9 @@ async function getPlayerStats(
  * @param quartal
  * @returns
  */
-function getTTRLink(quartal:boolean, groupId?:string) {
-  if (groupId) {
-    return quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?groupId=${groupId}&ttrQuartalorAktuell=quartal` :
-  `https://www.mytischtennis.de/community/ajax/_rankingList?groupId=${groupId}`;
-  } else {
-    const config = readTeamConfig();
-    return quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${config.vereinId},TTBW&ttrQuartalorAktuell=quartal` :
-    `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${config.vereinId},TTBW`;
-  }
+function getTTRLink(quartal:boolean, clubId:string) {
+  return quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW&ttrQuartalorAktuell=quartal` :
+    `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW`;
 }
 
 /**
@@ -240,18 +232,17 @@ async function getStatisticsForPlayers(loginOpt:RequestInit,
     players:{name:string,
     ttr:number,
     qttr:number}[],
-    groupId?:string):Promise<Player[]> {
+    clubId:string):Promise<Player[]> {
   let quartal = false;
-  let html = await fetch(getTTRLink(quartal, groupId), loginOpt);
+  let html = await fetch(getTTRLink(quartal, clubId), loginOpt);
   let ttrs = getTTRForPlayers(players, await html.text(), quartal);
   quartal = true;
-  html = await fetch(getTTRLink(quartal, groupId), loginOpt);
+  html = await fetch(getTTRLink(quartal, clubId), loginOpt);
   ttrs = getTTRForPlayers(ttrs, await html.text(), quartal);
   const playerObjects:Player[] = [];
   for (const elem of ttrs) {
     playerObjects.push({
       ...elem,
-      team: 1,
       actions: 0,
       wins: 0,
       loses: 0,
@@ -264,12 +255,23 @@ async function getStatisticsForPlayers(loginOpt:RequestInit,
  *
  */
 export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]> {
-  const players = await getAllPlayers();
+  const players:({team:string, name:string, nickName:string}[]|undefined) = await getAllPlayers();
   if (players === undefined) return [];
+  const clubs:{name:string, id:string}[] = readClubs();
+  const clubId:(string | undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
   const playerObjects = players.map((player) => {
-    return {name: player, ttr: 0, qttr: 0};
+    return {team: Number.parseInt(player.team),
+      name: player.name,
+      nickName: player.nickName,
+      ttr: 0,
+      qttr: 0};
   });
-  return await getStatisticsForPlayers(loginOpt, playerObjects);
+  if (clubId) {
+    return await getStatisticsForPlayers(loginOpt, playerObjects, clubId);
+  }
+  else {
+    return new Promise(() => playerObjects);
+  }
 }
 
 /**
@@ -288,6 +290,7 @@ async function getEnemyPlayers(loginOpt:RequestInit,
     if (enemy) {
       league = team.league;
       groupId = team.groupId;
+      const clubId = enemy.enemyClubId;
       const response = await fetchTeam(config.saison,
           league,
           groupId,
@@ -300,7 +303,7 @@ async function getEnemyPlayers(loginOpt:RequestInit,
         const names = player.split(', ');
         return {name: names[1] + ' ' + names[0], ttr: 0, qttr: 0};
       });
-      const ttrs = await getStatisticsForPlayers(loginOpt, playerObjects, groupId);
+      const ttrs = await getStatisticsForPlayers(loginOpt, playerObjects, clubId);
       const players = parsePlayerStats(ttrs, tables.gamestatsTable);
       return players;
     }
@@ -312,7 +315,8 @@ async function getEnemyPlayers(loginOpt:RequestInit,
  * @param loginOpt
  */
 export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], enemies:Team[]}> {
-  const ttDates = (await getDates([]))?.ttDates;
+  const data = (await getDates([]));
+  const ttDates = data?.ttDates;
   const nextDateFirstTeam = ttDates?.find((d) => {
     if (d.firstTeam) {
       return DateTime.fromISO(d.date).diffNow().toMillis() > 0;
@@ -325,25 +329,28 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
   });
   console.log(nextDateFirstTeam, nextDateSecondTeam);
   const playerObjectsFirst = nextDateFirstTeam?.availablePlayers.map((player) => {
-    return {name: player, ttr: 0, qttr: 0};
+    return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0};
   });
   const allies:Team[] = [];
   const enemies:Team[] = [];
-  if (playerObjectsFirst) {
+  const clubs:{name:string, id:string}[] = readClubs();
+  const clubId:(string|undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
+  if (playerObjectsFirst && clubId) {
     allies.push({
       name: 'TSG Oberkirchberg',
-      members: (await getStatisticsForPlayers(loginOpt, playerObjectsFirst)).slice(0, 7),
+      members: (await getStatisticsForPlayers(loginOpt, playerObjectsFirst, clubId)).slice(0, 6),
     });
   }
   const playerObjectsSecond = nextDateSecondTeam?.availablePlayers.map((player) => {
-    return {name: player, ttr: 0, qttr: 0};
+    return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0};
   });
-  if (playerObjectsSecond) {
+  if (playerObjectsSecond && clubId) {
     let members;
     if (nextDateFirstTeam?.date === nextDateSecondTeam?.date) {
-      members = (await getStatisticsForPlayers(loginOpt, playerObjectsSecond)).slice(7);
+      members = (await getStatisticsForPlayers(loginOpt, playerObjectsSecond, clubId)).slice(6);
     } else {
-      members = (await getStatisticsForPlayers(loginOpt, playerObjectsSecond)).slice(0, 7);
+      members = (await getStatisticsForPlayers(loginOpt,
+          playerObjectsSecond.filter((el) => el.team === '2'), clubId)).slice(0, 6);
     }
     allies.push({
       name: 'TSG Oberkirchberg II',

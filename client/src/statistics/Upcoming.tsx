@@ -30,7 +30,7 @@ const TeamTable = (props:{team:Team | undefined}) => {
                         <th>TTR</th>{props.team.members.map((player) => <Fade bottom delay={0}><td>{player.ttr}</td></Fade>)}
                     </tr>
                     <tr>
-                        <th>QTTR+-</th>{props.team.members.map((player) => <Fade bottom delay={0}><td>{player.ttr >= player.qttr ? '+' + (player.ttr - player.qttr):(player.ttr - player.qttr)}</td></Fade>)}
+                        <th>QTTR+-</th>{props.team.members.map((player) => <Fade bottom delay={0}><td style={player.ttr >= player.qttr ? {color:"green"} : {color:"red"}}>{player.ttr >= player.qttr ? '+' + (player.ttr - player.qttr):(player.ttr - player.qttr)}</td></Fade>)}
                     </tr></>
                     }
                 </tbody>

@@ -4,7 +4,7 @@ import {DateTime} from 'luxon';
 import {v4 as uuid} from 'uuid';
 import {fetchTeams, getTablesFromHTML} from './myTTUtils';
 import parse from 'node-html-parser';
-import {getPlayersForTeam, readTeamConfig, writeEnemies} from './utils';
+import {getPlayersForTeam, readClubs, readTeamConfig, writeEnemies} from './utils';
 import fetch from 'node-fetch';
 
 
@@ -99,11 +99,11 @@ async function initTable() {
       spreadSheetId: spreadSheetId,
       ranges: {
         meta: 'Sheet1!A1:B7',
-        players: 'Sheet1!B9:B',
-        dates: 'Sheet1!C1:1',
-        gamesFirstTeam: 'Sheet1!C2:Z4',
-        gamesSecondTeam: 'Sheet1!C5:Z7',
-        entries: 'Sheet1!C9:ZZZ',
+        players: 'Sheet1!A9:C',
+        dates: 'Sheet1!D1:1',
+        gamesFirstTeam: 'Sheet1!D2:Z4',
+        gamesSecondTeam: 'Sheet1!D5:Z7',
+        entries: 'Sheet1!D9:ZZZ',
       },
     });
     const dateValues = [];
@@ -136,7 +136,7 @@ async function initTable() {
         [secondTeamEnemies, secondTeamVenues, secondTeamTimes],
         ttDates.allPlayers.map((player) => {
           const result = player.split(', ');
-          return [result[1] + ' ' + result[0]];
+          return ['Mannschaft', result[1] + ' ' + result[0], 'Spitzname'];
         }));
   }
 }
@@ -144,7 +144,8 @@ async function initTable() {
 /**
  * 
  */
-async function findEnemies(teamIndex:number):Promise<{enemyId:string, enemyName:string}[]> {
+async function findEnemies(teamIndex:number):
+              Promise<{enemyId:string, enemyName:string, enemyClubId:string}[]> {
   /**
    * 
    * @param link 
@@ -164,14 +165,18 @@ async function findEnemies(teamIndex:number):Promise<{enemyId:string, enemyName:
   const html = parse(await response.text());
   const table = html.querySelector('table > tbody');
   const rows = table?.querySelectorAll('tr') || [];
-  const enemies:{enemyId:string, enemyName:string}[] = [];
+  const enemies:{enemyId:string, enemyName:string, enemyClubId:string}[] = [];
   for (const row of rows) {
     const cell = row.querySelector('td > a');
     const link = cell?.getAttribute('href');
     if (link) {
       const enemy = parseLink(link);
-      if (enemy) {
-        enemies.push(enemy);
+      const clubs:{name:string, id:string}[] = readClubs();
+      const clubId:(string|undefined) = clubs.find(
+          (el) => enemy?.enemyName.includes(el.name.replaceAll(' ', '-')
+              .replaceAll('ö', 'oe').replaceAll('ä', 'ae').replaceAll('ü', 'ue')))?.id;
+      if (enemy && clubId) {
+        enemies.push({enemyId: enemy.enemyId, enemyName: enemy.enemyName, enemyClubId: clubId});
       }
     }
   }

@@ -10,16 +10,25 @@ export function readTeamConfig():Config {
   return config;
 }
 /**
+ * 
+ * @returns 
+ */
+export function readClubs():{name:string, id:string}[] {
+  const raw = readFileSync('./clubs.json').toString();
+  const clubs = JSON.parse(raw);
+  return clubs;
+}
+/**
 * 
 * @param enemies 
 */
-export function writeEnemies(enemies:{enemyId:string, enemyName:string}[][]) {
+export function writeEnemies(enemies:{enemyId:string, enemyName:string, enemyClubId:string}[][]) {
   const raw = readFileSync('./teamConfig.json').toString();
   const config:Config = JSON.parse(raw) as Config;
   for (let i = 0; i < config.teams.length; i++) {
     config.teams[i].enemies = enemies[i];
   }
-  writeFileSync('./teamConfig.json', JSON.stringify(config));
+  writeFileSync('./teamConfig.json', JSON.stringify(config, null, '\t'));
 }
 
 /**

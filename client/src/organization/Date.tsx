@@ -22,6 +22,7 @@ const CustomButton = (props: {dateID:string, buttonID:string, handler:Function, 
 
 const Date = (props: {ttDate:TTDate, delay:number}) => {
     const [radioValue, setRadioValue] = useState(props.ttDate.option);
+    const [hide, setHide] = useState(false);
     useEffect(() => {
         const postOption = async (ttDate:TTDate) => {
             let res = await fetch("/player", {
@@ -33,6 +34,7 @@ const Date = (props: {ttDate:TTDate, delay:number}) => {
             });
             return res;
           }
+        setHide(DateTime.fromISO(props.ttDate.date).diffNow().toMillis() < 0);
         if(radioValue !== props.ttDate.option) {
             let oldOption = props.ttDate.option;
             props.ttDate.option = radioValue;
@@ -43,7 +45,7 @@ const Date = (props: {ttDate:TTDate, delay:number}) => {
     }, [radioValue]);
     return (
         <Fade bottom delay={props.delay}>
-            <Table striped bordered hover >
+            <Table style={hide ? {display:"none"}:{}} striped bordered hover >
                 <thead>
                     <tr><th colSpan={2} style={{textAlign:"center"}}><h2>{DateTime.fromISO(props.ttDate.date).toFormat("dd.MM.yyyy")}</h2></th></tr>
                     <tr><th style={{width: "50%"}}>1. Mannschaft</th>

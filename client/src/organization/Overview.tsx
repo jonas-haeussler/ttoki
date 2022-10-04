@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import React from "react";
 import { Table } from "react-bootstrap"
 import { TTDate } from "../../../shared/types";
@@ -15,7 +16,9 @@ const Overview = (props: {ttDates:TTDate[], loading:boolean}) => {
                 </tr>
               </thead>
               <tbody id="game-entries">
-                <GameEntries ttDates={props.ttDates} loading={props.loading} />
+                <GameEntries ttDates={props.ttDates.filter((date) => {
+                  return DateTime.fromISO(date.date).diffNow().toMillis() > 0;
+                  })} loading={props.loading} />
               </tbody>
           </Table>
     )
