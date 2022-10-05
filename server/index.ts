@@ -15,14 +15,14 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 
 let opt:RequestInit;
-login().then((res) => {
+/* login().then((res) => {
   opt = res;
   loopLogIn();
 });
 
-/**
- * 
- */
+**
+ *
+ *
 function loopLogIn() {
   setTimeout(async () => {
     console.log('Relogging in to mytischtennis');
@@ -30,6 +30,7 @@ function loopLogIn() {
     loopLogIn();
   }, 3600000);
 }
+*/
 
 
 if (process.env.NODE_ENV === 'production') {
@@ -73,11 +74,20 @@ app.post('/player', bodyParser.json(), async (req, res) => {
   const answer = await postPlayer(date);
 });
 app.get('/myTTTeam', async (req, res) => {
-  const myTTTeamData = await getMyTTOkiTeamData(opt);
+  let myTTTeamData = await getMyTTOkiTeamData(opt);
+  if (myTTTeamData.every((player) => player.ttr === 0)) {
+    opt = await login();
+    myTTTeamData = await getMyTTOkiTeamData(opt);
+  }
   res.json(myTTTeamData);
 });
 app.get('/nextMatches', async (req, res) => {
-  const teams = await getUpcoming(opt);
-  console.log(JSON.stringify(teams));
+  let teams = await getUpcoming(opt);
+  for (const ally of teams.allies) {
+    if (ally.members.every((member) => member.ttr === 0)) {
+      opt = await login();
+      teams = await getUpcoming(opt);
+    }
+  }
   res.json(teams);
 });

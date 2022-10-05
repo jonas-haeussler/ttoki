@@ -12,8 +12,8 @@ import {getPlayersForTeam, readClubs, readTeamConfig} from './utils';
 export async function login(): Promise<RequestInit> {
   /**
    *
-   * @param response
-   * @returns
+   * @param {Response} response
+   * @return {string}
    */
   function parseCookies(response:Response) {
     const raw = response.headers.raw()['set-cookie'];
@@ -57,11 +57,13 @@ export async function login(): Promise<RequestInit> {
 }
 /**
  *
- * @param saison
- * @param league
- * @param groupId
- * @param teamId
- * @param round
+ * @param {string} saison
+ * @param {string} league
+ * @param {string} groupId
+ * @param {string} teamId
+ * @param {string} teamName
+ * @param {string} round
+ * @return {Promise<Response>}
  */
 async function fetchTeam(saison:string,
     league:string,
@@ -102,8 +104,8 @@ export async function fetchTeams():Promise<Response[]> {
 export function getTablesFromHTML(html: string):Tables {
   /**
    *
-   * @param rows
-   * @returns
+   * @param {[HTMLElement]} rows
+   * @return {[[string]]}
    */
   function parseTable(rows: HTMLElement[]):string[][] {
     const rowData = [];
@@ -137,8 +139,10 @@ export function getTablesFromHTML(html: string):Tables {
 
 /**
  *
- * @param players
- * @param html
+ * @param {{string, number, number}} players
+ * @param {string} html
+ * @param {boolean} quartal
+ * @return {{string, number, number}}
  */
 function getTTRForPlayers(players:{name:string,
     ttr:number, qttr:number}[],
@@ -167,8 +171,9 @@ html:string, quartal:boolean):{name:string, ttr:number, qttr:number}[] {
 }
 
 /**
- *
- * @returns
+ * @param {[Player]} ttrs
+ * @param {[[string]]} gamestatsTable
+ * @return {[Player]}
  */
 function parsePlayerStats(ttrs:Player[],
     gamestatsTable:string[][]) {
@@ -202,7 +207,8 @@ function parsePlayerStats(ttrs:Player[],
 
 /**
  *
- * @param ttrs
+ * @param {[Player]} ttrs
+ * @return {Promise<Player[]>}
  */
 async function getPlayerStats(
     ttrs:Player[]):Promise<Player[]> {
@@ -216,8 +222,9 @@ async function getPlayerStats(
 
 /**
  *
- * @param quartal
- * @returns
+ * @param {boolean} quartal
+ * @param {string} clubId
+ * @return {string}
  */
 function getTTRLink(quartal:boolean, clubId:string) {
   return quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW&ttrQuartalorAktuell=quartal` :
@@ -225,8 +232,10 @@ function getTTRLink(quartal:boolean, clubId:string) {
 }
 
 /**
- *
- * @returns
+ * @param {RequestInit} loginOpt
+ * @param {{string, number, number}[]} players
+ * @param {string} clubId
+ * @return {Promise<Player[]>}
  */
 async function getStatisticsForPlayers(loginOpt:RequestInit,
     players:{name:string,
@@ -252,7 +261,8 @@ async function getStatisticsForPlayers(loginOpt:RequestInit,
 }
 
 /**
- *
+ * @param {RequestInit} loginOpt
+ * @return {Promise<Player[]>}
  */
 export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]> {
   const players:({team:string, name:string, nickName:string}[]|undefined) = await getAllPlayers();
@@ -268,15 +278,15 @@ export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]>
   });
   if (clubId) {
     return await getStatisticsForPlayers(loginOpt, playerObjects, clubId);
-  }
-  else {
+  } else {
     return new Promise(() => playerObjects);
   }
 }
 
 /**
- *
- * @param teamName
+ * @param {RequestInit} loginOpt
+ * @param {string} teamName
+ * @return {Promise<Player[] | undefined>}
  */
 async function getEnemyPlayers(loginOpt:RequestInit,
     teamName:string):Promise<Player[] | undefined> {
@@ -311,8 +321,8 @@ async function getEnemyPlayers(loginOpt:RequestInit,
 }
 
 /**
- *
- * @param loginOpt
+ * @param {RequestInit} loginOpt
+ * @return {Promise<{allies:Team[], enemies:Team[]}>}
  */
 export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], enemies:Team[]}> {
   const data = (await getDates([]));
