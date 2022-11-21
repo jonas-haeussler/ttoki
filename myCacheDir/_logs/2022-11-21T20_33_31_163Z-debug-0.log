@@ -1,0 +1,138 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\Jonas\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@9.1.2
+2 info using node@v16.13.2
+3 timing npm:load:whichnode Completed in 0ms
+4 timing config:load:defaults Completed in 3ms
+5 timing config:load:file:C:\Users\Jonas\AppData\Roaming\npm\node_modules\npm\npmrc Completed in 8ms
+6 timing config:load:builtin Completed in 8ms
+7 timing config:load:cli Completed in 6ms
+8 timing config:load:env Completed in 2ms
+9 timing config:load:file:E:\TTOki-Mannschaftsplanung\ttoki\.npmrc Completed in 2ms
+10 timing config:load:project Completed in 10ms
+11 timing config:load:file:C:\Users\Jonas\.npmrc Completed in 1ms
+12 timing config:load:user Completed in 1ms
+13 timing config:load:file:C:\Users\Jonas\AppData\Roaming\npm\etc\npmrc Completed in 1ms
+14 timing config:load:global Completed in 1ms
+15 timing config:load:setEnvs Completed in 2ms
+16 timing config:load Completed in 33ms
+17 timing npm:load:configload Completed in 34ms
+18 timing npm:load:mkdirpcache Completed in 1ms
+19 timing npm:load:mkdirplogs Completed in 2ms
+20 verbose title npm exec browserlist@latest --update-db
+21 verbose argv "exec" "--" "browserlist@latest" "--update-db"
+22 timing npm:load:setTitle Completed in 3ms
+23 timing config:load:flatten Completed in 6ms
+24 timing npm:load:display Completed in 7ms
+25 verbose logfile logs-max:10 dir:E:\TTOki-Mannschaftsplanung\ttoki\myCacheDir\_logs\2022-11-21T20_33_31_163Z-
+26 verbose logfile E:\TTOki-Mannschaftsplanung\ttoki\myCacheDir\_logs\2022-11-21T20_33_31_163Z-debug-0.log
+27 timing npm:load:logFile Completed in 11ms
+28 timing npm:load:timers Completed in 0ms
+29 timing npm:load:configScope Completed in 0ms
+30 timing npm:load Completed in 59ms
+31 silly logfile done cleaning log files
+32 timing config:load:flatten Completed in 1ms
+33 timing arborist:ctor Completed in 1ms
+34 timing arborist:ctor Completed in 0ms
+35 http fetch GET 200 https://registry.npmjs.org/browserlist 554ms (cache miss)
+36 timing arborist:ctor Completed in 0ms
+37 timing arborist:ctor Completed in 0ms
+38 timing arborist:ctor Completed in 0ms
+39 timing idealTree:init Completed in 6ms
+40 timing idealTree:userRequests Completed in 1ms
+41 silly idealTree buildDeps
+42 silly fetch manifest browserlist@1.0.1
+43 http fetch GET 200 https://registry.npmjs.org/browserlist 24ms (cache hit)
+44 silly placeDep ROOT browserlist@1.0.1 OK for:  want: 1.0.1
+45 silly fetch manifest chalk@^2.4.1
+46 http fetch GET 200 https://registry.npmjs.org/chalk 121ms (cache miss)
+47 timing idealTree:#root Completed in 166ms
+48 silly placeDep ROOT chalk@2.4.2 OK for: browserlist@1.0.1 want: ^2.4.1
+49 silly fetch manifest ansi-styles@^3.2.1
+50 silly fetch manifest escape-string-regexp@^1.0.5
+51 silly fetch manifest supports-color@^5.3.0
+52 http fetch GET 200 https://registry.npmjs.org/ansi-styles 95ms (cache miss)
+53 http fetch GET 200 https://registry.npmjs.org/supports-color 202ms (cache miss)
+54 http fetch GET 200 https://registry.npmjs.org/escape-string-regexp 222ms (cache miss)
+55 timing idealTree:node_modules/browserlist Completed in 229ms
+56 silly placeDep ROOT ansi-styles@3.2.1 OK for: chalk@2.4.2 want: ^3.2.1
+57 silly placeDep ROOT escape-string-regexp@1.0.5 OK for: chalk@2.4.2 want: ^1.0.5
+58 silly placeDep ROOT supports-color@5.5.0 OK for: chalk@2.4.2 want: ^5.3.0
+59 silly fetch manifest color-convert@^1.9.0
+60 silly fetch manifest has-flag@^3.0.0
+61 http fetch GET 200 https://registry.npmjs.org/has-flag 121ms (cache miss)
+62 http fetch GET 200 https://registry.npmjs.org/color-convert 155ms (cache miss)
+63 timing idealTree:node_modules/chalk Completed in 163ms
+64 silly placeDep ROOT color-convert@1.9.3 OK for: ansi-styles@3.2.1 want: ^1.9.0
+65 silly fetch manifest color-name@1.1.3
+66 http fetch GET 200 https://registry.npmjs.org/color-name 105ms (cache miss)
+67 timing idealTree:node_modules/ansi-styles Completed in 111ms
+68 silly placeDep ROOT color-name@1.1.3 OK for: color-convert@1.9.3 want: 1.1.3
+69 timing idealTree:node_modules/color-convert Completed in 3ms
+70 timing idealTree:node_modules/color-name Completed in 0ms
+71 timing idealTree:node_modules/escape-string-regexp Completed in 0ms
+72 silly placeDep ROOT has-flag@3.0.0 OK for: supports-color@5.5.0 want: ^3.0.0
+73 timing idealTree:node_modules/supports-color Completed in 3ms
+74 timing idealTree:node_modules/has-flag Completed in 0ms
+75 timing idealTree:buildDeps Completed in 679ms
+76 timing idealTree:fixDepFlags Completed in 2ms
+77 timing idealTree Completed in 692ms
+78 timing reify:loadTrees Completed in 694ms
+79 timing reify:diffTrees Completed in 3ms
+80 silly reify moves {}
+81 timing reify:retireShallow Completed in 3ms
+82 timing reify:createSparse Completed in 11ms
+83 timing reify:loadBundles Completed in 0ms
+84 silly audit bulk request {
+84 silly audit   browserlist: [ '1.0.1' ],
+84 silly audit   chalk: [ '2.4.2' ],
+84 silly audit   'ansi-styles': [ '3.2.1' ],
+84 silly audit   'escape-string-regexp': [ '1.0.5' ],
+84 silly audit   'supports-color': [ '5.5.0' ],
+84 silly audit   'color-convert': [ '1.9.3' ],
+84 silly audit   'color-name': [ '1.1.3' ],
+84 silly audit   'has-flag': [ '3.0.0' ]
+84 silly audit }
+85 silly tarball no local data for has-flag@https://registry.npmjs.org/has-flag/-/has-flag-3.0.0.tgz. Extracting by manifest.
+86 silly tarball no local data for color-convert@https://registry.npmjs.org/color-convert/-/color-convert-1.9.3.tgz. Extracting by manifest.
+87 silly tarball no local data for supports-color@https://registry.npmjs.org/supports-color/-/supports-color-5.5.0.tgz. Extracting by manifest.
+88 silly tarball no local data for color-name@https://registry.npmjs.org/color-name/-/color-name-1.1.3.tgz. Extracting by manifest.
+89 silly tarball no local data for escape-string-regexp@https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz. Extracting by manifest.
+90 silly tarball no local data for ansi-styles@https://registry.npmjs.org/ansi-styles/-/ansi-styles-3.2.1.tgz. Extracting by manifest.
+91 silly tarball no local data for chalk@https://registry.npmjs.org/chalk/-/chalk-2.4.2.tgz. Extracting by manifest.
+92 silly tarball no local data for browserlist@https://registry.npmjs.org/browserlist/-/browserlist-1.0.1.tgz. Extracting by manifest.
+93 http fetch GET 200 https://registry.npmjs.org/has-flag/-/has-flag-3.0.0.tgz 107ms (cache miss)
+94 timing reifyNode:node_modules/has-flag Completed in 127ms
+95 http fetch GET 200 https://registry.npmjs.org/color-convert/-/color-convert-1.9.3.tgz 163ms (cache miss)
+96 timing reifyNode:node_modules/color-convert Completed in 182ms
+97 http fetch GET 200 https://registry.npmjs.org/escape-string-regexp/-/escape-string-regexp-1.0.5.tgz 223ms (cache miss)
+98 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 257ms
+99 timing auditReport:getReport Completed in 260ms
+100 silly audit report {}
+101 timing auditReport:init Completed in 0ms
+102 timing reify:audit Completed in 263ms
+103 timing reifyNode:node_modules/escape-string-regexp Completed in 256ms
+104 http fetch GET 200 https://registry.npmjs.org/supports-color/-/supports-color-5.5.0.tgz 245ms (cache miss)
+105 http fetch GET 200 https://registry.npmjs.org/ansi-styles/-/ansi-styles-3.2.1.tgz 253ms (cache miss)
+106 timing reifyNode:node_modules/supports-color Completed in 281ms
+107 timing reifyNode:node_modules/ansi-styles Completed in 280ms
+108 http fetch GET 200 https://registry.npmjs.org/color-name/-/color-name-1.1.3.tgz 264ms (cache miss)
+109 timing reifyNode:node_modules/color-name Completed in 298ms
+110 http fetch GET 200 https://registry.npmjs.org/chalk/-/chalk-2.4.2.tgz 324ms (cache miss)
+111 timing reifyNode:node_modules/chalk Completed in 350ms
+112 http fetch GET 200 https://registry.npmjs.org/browserlist/-/browserlist-1.0.1.tgz 373ms (cache miss)
+113 timing reifyNode:node_modules/browserlist Completed in 400ms
+114 timing reify:unpack Completed in 402ms
+115 timing reify:unretire Completed in 1ms
+116 timing build:queue Completed in 3ms
+117 timing build:link:node_modules/browserlist Completed in 24ms
+118 timing build:link Completed in 24ms
+119 timing build:deps Completed in 29ms
+120 timing build Completed in 29ms
+121 timing reify:build Completed in 30ms
+122 timing reify:trash Completed in 1ms
+123 timing reify:save Completed in 20ms
+124 timing reify Completed in 1187ms
+125 timing command:exec Completed in 6958ms
+126 verbose exit 1
+127 timing npm Completed in 7064ms
+128 verbose code 1
