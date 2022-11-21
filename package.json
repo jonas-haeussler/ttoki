@@ -4,7 +4,7 @@
   "description": "",
   "main": "server/index.ts",
   "scripts": {
-    "build": "cd client && npm run build",
+    "build": "CI=false && cd client && npm run build",
     "postinstall": "cd client && npm install",
     "client": "cd client && npm run dev",
     "start": "ts-node server/index.ts",
