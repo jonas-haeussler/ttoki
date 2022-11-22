@@ -52,5 +52,5 @@ jobs:
         with:
           app-name: 'tt-oki'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2E96B6FA8A45472BAF96E5F89D4B68C7 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_15E5CAFAA57441CEA4D2D09B53F187FD }}
           package: .
