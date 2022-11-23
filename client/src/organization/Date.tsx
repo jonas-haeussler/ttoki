@@ -25,7 +25,7 @@ const Date = (props: {ttDate:TTDate, delay:number}) => {
     const [hide, setHide] = useState(false);
     useEffect(() => {
         const postOption = async (ttDate:TTDate) => {
-            let res = await fetch("/player", {
+            let res = await fetch("/api/player", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

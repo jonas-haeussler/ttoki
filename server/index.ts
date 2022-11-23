@@ -50,16 +50,16 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT as number, '0.0.0.0', () => {
+app.listen(PORT as number, () => {
   console.log(`Server listening on ${PORT}`);
 });
 
-app.get('/players', async (req, res) => {
+app.get('/api/players', async (req, res) => {
   const players = await getAllPlayers();
   console.log('Getting players from Google Sheets');
   res.json(players);
 });
-app.get('/dates', async (req, res) => {
+app.get('/api/dates', async (req, res) => {
   const filters = req.query.filters;
   if (filters) {
     console.log('Getting dates from Google Sheets');
@@ -68,12 +68,12 @@ app.get('/dates', async (req, res) => {
     res.json(dates);
   }
 });
-app.post('/player', bodyParser.json(), async (req, res) => {
+app.post('/api/player', bodyParser.json(), async (req, res) => {
   console.log('Posting players to Google Sheets');
   const date:TTDate = req.body as TTDate;
   const answer = await postPlayer(date);
 });
-app.get('/myTTTeam', async (req, res) => {
+app.get('/api/myTTTeam', async (req, res) => {
   let myTTTeamData = await getMyTTOkiTeamData(opt);
   if (myTTTeamData.every((player) => player.ttr === 0)) {
     opt = await login();
@@ -81,7 +81,7 @@ app.get('/myTTTeam', async (req, res) => {
   }
   res.json(myTTTeamData);
 });
-app.get('/nextMatches', async (req, res) => {
+app.get('/api/nextMatches', async (req, res) => {
   let teams = await getUpcoming(opt);
   for (const ally of teams.allies) {
     if (ally.members.every((member) => member.ttr === 0)) {

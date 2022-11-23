@@ -50,7 +50,7 @@ const Upcoming = () => {
 
     useEffect(() => {
         const loadUpcoming = async () => {
-            const url = `/nextMatches`;
+            const url = `/api/nextMatches`;
             let res = await fetch(url.toString());
             let teams = await res.json();
             console.log(teams.allies);
