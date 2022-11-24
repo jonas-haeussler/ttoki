@@ -14,7 +14,7 @@ const Statistics = () => {
 
     useEffect(() => {
         const loadPlayers = async () => {
-            const url = `/myTTTeam`;
+            const url = `/api/myTTTeam`;
             let res = await fetch(url.toString());
             let myTTPlayerData = await res.json();
             if(myTTPlayerData && myTTPlayerData.length > 0) {

@@ -30,7 +30,7 @@ const Insert = () => {
 
     useEffect(() => {
         const fetchPlayers = async () => {
-            const data = await fetch("/players");
+            const data = await fetch("/api/players");
             const res = await data.json();
             const allPlayers = res.map((el:{team:string, name:string, nickName:string}) => el.name);
             SetAllPlayers(allPlayers);
