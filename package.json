@@ -4,10 +4,9 @@
   "description": "",
   "main": "server/index.ts",
   "scripts": {
-    "build": "CI=false && cd client && npm run build",
-    "postinstall": "cd client && npm install",
     "client": "cd client && npm run dev",
-    "start": "ts-node server/index.ts",
+    "build": "tsc -p . && yarn replace-ts-alias -p .",
+    "start": "node ./server/build/server/index.js",
     "init": "ts-node server/initSeason.ts",
     "dev": "concurrently -n 'server,client' -c 'blue,green' \"nodemon server/index.ts\" \"npm run client\""
   },

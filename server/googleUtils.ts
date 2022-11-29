@@ -11,11 +11,19 @@ import {readFileSync, writeFileSync} from 'fs';
  * @returns 
  */
 function getGoogleCredentials():Object | undefined {
-  const keysVar = process.env['GOOGLE_CREDENTIALS'];
-  if (keysVar) {
-    const keys = JSON.parse(keysVar);
-    return keys;
+  const keys = {
+      "type": "service_account",
+      "project_id": "lithe-paratext-282507",
+      "private_key_id": "55e107b033a1ef18eba0ae6f59d38254df27c923",
+      "private_key": process.env['PRIVATE_KEY'],
+      "client_email": "johnson@lithe-paratext-282507.iam.gserviceaccount.com",
+      "client_id": "102988443238800265971",
+      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+      "token_uri": "https://oauth2.googleapis.com/token",
+      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/johnson%40lithe-paratext-282507.iam.gserviceaccount.com"
   }
+  return keys;
 }
 
 /**

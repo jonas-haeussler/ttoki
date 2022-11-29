@@ -3,6 +3,3 @@ dispatch:
   - url: "*/api/*"
     service: backend
 
-  # Send all other traffic to the default (frontend).
-  - url: "*/*"
-    service: default
