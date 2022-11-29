@@ -59,13 +59,13 @@ async function loadMatches():Promise<TTDates> {
   const entries:TTDate[] = [];
   while (true) {
     if (gameFirstTeam.done && gameSecondTeam.done) break;
-    let firstDate = DateTime.now();
-    let secondDate = DateTime.now();
+    let firstDate = DateTime.now().setZone('Europe/Paris');
+    let secondDate = DateTime.now().setZone('Europe/Paris');
     if (gameFirstTeam.value) {
-      firstDate = DateTime.fromFormat(gameFirstTeam.value.date, 'dd.MM.yy');
+      firstDate = DateTime.fromFormat(gameFirstTeam.value.date, 'dd.MM.yy', {zone: 'Europe/Paris'});
     }
     if (gameSecondTeam.value) {
-      secondDate = DateTime.fromFormat(gameSecondTeam.value.date, 'dd.MM.yy');
+      secondDate = DateTime.fromFormat(gameSecondTeam.value.date, 'dd.MM.yy', {zone: 'Europe/Paris'});
     }
     const entry:Record<string, any> = {
       id: uuid(),

@@ -145,8 +145,8 @@ Promise<{team:string, name:string, nickName:string}[] | undefined> {
 export function parseDate(day:string, time?:string) : string {
   const date:DateTime = DateTime.fromFormat(day, 'dd.MM.yy');
   if (time) {
-    const parsed:DateTime = DateTime.fromISO(time);
-    const today:DateTime = DateTime.now().startOf('day');
+    const parsed:DateTime = DateTime.fromISO(time).setZone('Europe/Paris');
+    const today:DateTime = DateTime.now().startOf('day').setZone('Europe/Paris');
     const timeOfDay:Duration = parsed.diff(today);
     const result:DateTime = date.startOf('day').plus(timeOfDay);
     return result.toISO();
