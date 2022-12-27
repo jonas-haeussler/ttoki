@@ -1,6 +1,6 @@
 {
 	"saison": "22-23",
-	"round": "vr",
+	"round": "rr",
 	"vereinId": "15043",
 	"teams": [
 		{
@@ -10,29 +10,9 @@
 			"teamName": "TSG-Oberkirchberg",
 			"enemies": [
 				{
-					"enemyId": "2590964",
-					"enemyName": "TSV-Holzheim-II",
-					"enemyClubId": "15026"
-				},
-				{
-					"enemyId": "2589867",
-					"enemyName": "TSV-Herrlingen-III",
-					"enemyClubId": "15025"
-				},
-				{
-					"enemyId": "2592784",
-					"enemyName": "TSV-Illertissen",
-					"enemyClubId": "15029"
-				},
-				{
-					"enemyId": "2592915",
-					"enemyName": "VfB-Ulm",
-					"enemyClubId": "15060"
-				},
-				{
-					"enemyId": "2590869",
-					"enemyName": "SC-Staig-IV",
-					"enemyClubId": "15056"
+					"enemyId": "2589779",
+					"enemyName": "TSF-Ludwigsfeld-II",
+					"enemyClubId": "15034"
 				},
 				{
 					"enemyId": "2590414",
@@ -40,19 +20,39 @@
 					"enemyClubId": "15043"
 				},
 				{
+					"enemyId": "2589216",
+					"enemyName": "SF-Rammingen",
+					"enemyClubId": "15048"
+				},
+				{
+					"enemyId": "2590869",
+					"enemyName": "SC-Staig-IV",
+					"enemyClubId": "15056"
+				},
+				{
+					"enemyId": "2592915",
+					"enemyName": "VfB-Ulm",
+					"enemyClubId": "15060"
+				},
+				{
 					"enemyId": "2589434",
 					"enemyName": "TTC-Senden-Hoell",
 					"enemyClubId": "15055"
 				},
 				{
-					"enemyId": "2589779",
-					"enemyName": "TSF-Ludwigsfeld-II",
-					"enemyClubId": "15034"
+					"enemyId": "2592784",
+					"enemyName": "TSV-Illertissen",
+					"enemyClubId": "15029"
 				},
 				{
-					"enemyId": "2589216",
-					"enemyName": "SF-Rammingen",
-					"enemyClubId": "15048"
+					"enemyId": "2589867",
+					"enemyName": "TSV-Herrlingen-III",
+					"enemyClubId": "15025"
+				},
+				{
+					"enemyId": "2590964",
+					"enemyName": "TSV-Holzheim-II",
+					"enemyClubId": "15026"
 				},
 				{
 					"enemyId": "2591980",
@@ -68,6 +68,11 @@
 			"teamName": "TSG-Oberkirchberg-II",
 			"enemies": [
 				{
+					"enemyId": "2592301",
+					"enemyName": "TSG-Rottenacker",
+					"enemyClubId": "15051"
+				},
+				{
 					"enemyId": "2589912",
 					"enemyName": "SC-Staig-V",
 					"enemyClubId": "15056"
@@ -78,29 +83,24 @@
 					"enemyClubId": "15019"
 				},
 				{
-					"enemyId": "2589866",
-					"enemyName": "SpVgg-Obermarchtal",
-					"enemyClubId": "15044"
-				},
-				{
 					"enemyId": "2590114",
 					"enemyName": "TTC-Ehingen-II",
 					"enemyClubId": "15017"
 				},
 				{
-					"enemyId": "2592301",
-					"enemyName": "TSG-Rottenacker",
-					"enemyClubId": "15051"
+					"enemyId": "2592305",
+					"enemyName": "TSG-Oberkirchberg-II",
+					"enemyClubId": "15043"
+				},
+				{
+					"enemyId": "2589866",
+					"enemyName": "SpVgg-Obermarchtal",
+					"enemyClubId": "15044"
 				},
 				{
 					"enemyId": "2592358",
 					"enemyName": "SV-Unterstadion-II",
 					"enemyClubId": "15062"
-				},
-				{
-					"enemyId": "2592305",
-					"enemyName": "TSG-Oberkirchberg-II",
-					"enemyClubId": "15043"
 				}
 			]
 		}

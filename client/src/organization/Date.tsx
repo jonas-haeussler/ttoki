@@ -75,6 +75,7 @@ const Date = (props: {ttDate:TTDate, delay:number}) => {
                     </tr>
                 </tbody>
             </Table>
+            <div style={hide ? {display:"none"}:{}} className="wrapper"><div className="divider div-transparent"></div></div>
         </Fade>
         );
 };

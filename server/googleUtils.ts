@@ -15,7 +15,7 @@ function getGoogleCredentials():Object | undefined {
       "type": "service_account",
       "project_id": "lithe-paratext-282507",
       "private_key_id": "55e107b033a1ef18eba0ae6f59d38254df27c923",
-      "private_key": process.env['PRIVATE_KEY'],
+      "private_key": process.env['PRIVATE_KEY'].replace(/\\n/g, '\n'),
       "client_email": "johnson@lithe-paratext-282507.iam.gserviceaccount.com",
       "client_id": "102988443238800265971",
       "auth_uri": "https://accounts.google.com/o/oauth2/auth",

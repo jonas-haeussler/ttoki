@@ -87,7 +87,8 @@ const Insert = () => {
         </Form>
          
         {dates.map(date => {
-            return <Date ttDate={date} delay={0} />
+            return <><Date ttDate={date} delay={0} /></>
+                    
         })}
         { loading ? <Loader/> : <></> }
         </>

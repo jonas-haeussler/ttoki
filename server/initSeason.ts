@@ -6,6 +6,7 @@ import {fetchTeams, getTablesFromHTML} from './myTTUtils';
 import parse from 'node-html-parser';
 import {getPlayersForTeam, readClubs, readTeamConfig, writeEnemies} from './utils';
 import fetch from 'node-fetch';
+import { stringify } from 'querystring';
 
 
 /**
@@ -86,7 +87,11 @@ async function loadMatches():Promise<TTDates> {
     }
     entries.push(entry as TTDate);
   }
-  return {ttDates: entries, allPlayers: playersFirstTeam.concat(playersSecondTeam)};
+  const allPlayers:{team:string, name:string, nickName:string}[] = [];
+  for (const player of playersFirstTeam.concat(playersSecondTeam)) {
+    allPlayers.push({team: 'Team', name: player, nickName: 'Spitzname'});
+  }
+  return {ttDates: entries, allPlayers: allPlayers};
 }
 /**
  * 
@@ -135,7 +140,7 @@ async function initTable() {
         [firstTeamEnemies, firstTeamVenues, firstTeamTimes],
         [secondTeamEnemies, secondTeamVenues, secondTeamTimes],
         ttDates.allPlayers.map((player) => {
-          const result = player.split(', ');
+          const result = player.name.split(', ');
           return ['Mannschaft', result[1] + ' ' + result[0], 'Spitzname'];
         }));
   }
