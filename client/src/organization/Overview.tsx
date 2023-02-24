@@ -7,7 +7,7 @@ import GameEntries from "./GameEntries";
 
 const Overview = (props: {ttDates:TTDate[], loading:boolean}) => {
     return (
-          <Table striped bordered hover>
+          <Table striped bordered hover className="custom-table">
               <thead>
                 <tr>
                   <th>Datum</th>

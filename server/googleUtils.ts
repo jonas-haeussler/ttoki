@@ -151,7 +151,7 @@ Promise<{team:string, name:string, nickName:string}[] | undefined> {
    * @return {string} An ISO representation of the date
    */
 export function parseDate(day:string, time?:string) : string {
-  const date:DateTime = DateTime.fromFormat(day, 'dd.MM.yy');
+  const date:DateTime = DateTime.fromFormat(day, 'dd.MM.yy').setZone('Europe/Paris');
   if (time) {
     const parsed:DateTime = DateTime.fromISO(time).setZone('Europe/Paris');
     const today:DateTime = DateTime.now().startOf('day').setZone('Europe/Paris');
@@ -252,14 +252,11 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
       const availablePlayers:{team:string, name:string, nickName:string}[] = [];
       for (let j = 0; j < allPlayers.length; j++) {
         if (entries.length > j && entries[j].length > i) {
-          if (entries[j][i] === Option.Yes) {
-            availablePlayers.push(allPlayers[j]);
-          } else if (entries[j][i] === Option.Maybe) {
-            const player = {team: allPlayers[j].team,
-              name: allPlayers[j].name,
-              nickName: allPlayers[j].nickName + ' (vielleicht)'};
-            availablePlayers.push(player);
-          }
+          const player = {team: allPlayers[j].team,
+            name: allPlayers[j].name,
+            nickName: allPlayers[j].nickName,
+            option: entries[j][i]};
+          availablePlayers.push(player);
         }
       }
       const ttDate:Record<string, any> = {
