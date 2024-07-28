@@ -1,6 +1,7 @@
 
 export enum Venue {Home,  Abroad};
-export enum Option {Yes = 'ja', No = 'nein', Maybe = 'vielleicht', Dunno = '?'};
+export enum Option {Yes = 'ja', No = 'nein', Maybe = 'vielleicht', Dunno = 'dunno'};
+
 
 export interface GoogleConfig {
   readonly spreadSheetId:string,
@@ -63,7 +64,7 @@ export interface TTDate {
   readonly id:string,
   readonly date:string,
   readonly activePlayers:string[],
-  readonly availablePlayers:{team:string, name:string, nickName:string}[],
+  readonly availablePlayers:{team:string, name:string, nickName:string, option:Option}[],
   readonly firstTeam:Game,
   readonly secondTeam:Game,
   option:Option,

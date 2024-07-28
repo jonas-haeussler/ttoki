@@ -295,8 +295,8 @@ async function getEnemyPlayers(loginOpt:RequestInit,
   let groupId = undefined;
   const config = readTeamConfig();
   for (const team of config.teams) {
-    enemy = team.enemies?.find((enemy) => enemy.enemyName === teamName.replaceAll(' ', '-')
-        .replaceAll('ö', 'oe').replaceAll('ä', 'ae').replaceAll('ü', 'ue'));
+    enemy = team.enemies?.find((enemy) => enemy.enemyName === teamName.replace(/ /g, '-')
+        .replace(/ö/g, 'oe').replace(/ä/g, 'ae').replace(/ü/g, 'ue'));
     if (enemy) {
       league = team.league;
       groupId = team.groupId;
