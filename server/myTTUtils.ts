@@ -24,8 +24,8 @@ export async function login(): Promise<RequestInit> {
     }).join(';');
   }
   const formData:URLSearchParams = new URLSearchParams();
-  formData.append('userNameB', '--Johnny--');
-  formData.append('userPassWordB', 'fraudech1');
+  formData.append('userNameB', process.env.MYTT_USERNAME);
+  formData.append('userPassWordB', process.env.MYTT_PASSWORD);
   formData.append('targetPage', 'https://www.mytischtennis.de/community/index?fromlogin=1');
   formData.append('goLogin', 'Einloggen');
   const options:RequestInit = {
