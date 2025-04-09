@@ -1,12 +1,12 @@
-import React from "react";
-import { Container, Row, Col } from "react-bootstrap";
+// import React from "react";
+// import { Container, Row, Col } from "react-bootstrap";
 
-const Square = (props: {text:string}) => {
+/*const Square = (props: {text:string}) => {
     return (
         <div style={{margin: "2% 1% 2% 0%"}} className="square">{props.text}</div>
     );
-}
-const Heading = (props: {title:string, subtitle:string}) => {
+}*/
+/* const Heading = (props: {title:string, subtitle:string}) => {
     return (
         <div style={{margin:"2% 2% 2% 2%"}}>
             <h3>{props.title}</h3>
@@ -14,6 +14,7 @@ const Heading = (props: {title:string, subtitle:string}) => {
         </div>
     );
 }
+    */
 
 const PingPong = () => {
     return <><h1 style={{textAlign: "center", marginTop:"100px"}}>Noch in Arbeit 😄</h1></>

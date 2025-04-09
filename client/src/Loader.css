@@ -133,7 +133,7 @@
   }
 }
 .loading {
-      background-color: lightgrey;
+      background-color: lightgrey !important;
       min-height: 6cm;
       width: 90%;
       height: 90%;

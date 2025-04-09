@@ -1,12 +1,10 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { Button, Form, FormControl, InputGroup } from "react-bootstrap";
-import { TTDate, Game } from "../../../shared/types";
+import { TTDate } from "../types";
 import { fetchDates } from "../main";
 import Date from "./Date";
 import Loader from "../Loader";
-import { DateTime } from "luxon";
-
 
 
 const Insert = () => {
@@ -19,19 +17,25 @@ const Insert = () => {
             SetLoading(true);
             SetDates([]);
             let ttDates:TTDate[] = [];
-            if(activePlayers.size > 0)
-                ttDates = await fetchDates(Array.from(activePlayers));
+            if(activePlayers.size > 0) {
+                try {
+                    ttDates = await fetchDates(Array.from(activePlayers));
+                }
+                catch(e) {
+                    console.log(e);
+                    throw new Error();
+                }
+            }
             SetDates(ttDates);
-            console.log(ttDates);
             SetLoading(false);
         }
-        getDates();
+        getDates().catch(rej => console.log(rej));
     }, [activePlayers])
 
     useEffect(() => {
         const fetchPlayers = async () => {
-            const data = await fetch("/api/players");
-            const res = await data.json();
+            const data = await fetch("/api/players").catch(rej => console.log(rej));
+            const res = await data?.json().catch(rej => console.log(rej));
             const allPlayers = res.map((el:{team:string, name:string, nickName:string}) => el.name);
             SetAllPlayers(allPlayers);
             console.log(allPlayers);
@@ -51,7 +55,7 @@ const Insert = () => {
       } 
     const [loading, SetLoading] = useState<boolean>();
     
-    function doValidate(e:any) {
+    function doValidate(e:React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         const inputElem = e.target as HTMLInputElement;
         const name = inputElem.value;
         if(allPlayers.includes(name)) {
@@ -72,7 +76,7 @@ const Insert = () => {
                     {
                         Array.from(activePlayers).map((player:string) => <>
                             <Button variant="outline-secondary" disabled>{player}</Button>
-                            <Button variant="outline-secondary" onClick={(e) => removeActivePlayer(player)} >X</Button>
+                            <Button variant="outline-secondary" onClick={(_) => removeActivePlayer(player)} >X</Button>
                             </>
                         )
                     }

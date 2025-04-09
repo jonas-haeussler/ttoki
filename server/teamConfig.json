@@ -1,0 +1,108 @@
+{
+	"saison": "24-25",
+	"round": "vr",
+	"vereinId": "15043",
+	"teams": [
+		{
+			"league": "Herren-Bezirksklasse-Gr-1",
+			"groupId": "470846",
+			"teamId": "2846595",
+			"teamName": "TSG-Oberkirchberg",
+			"enemies": [
+				{
+					"enemyId": "2846595",
+					"enemyName": "TSG-Oberkirchberg",
+					"enemyClubId": "15043"
+				},
+				{
+					"enemyId": "2846416",
+					"enemyName": "TTC-Senden-Hoell",
+					"enemyClubId": "15055"
+				},
+				{
+					"enemyId": "2846880",
+					"enemyName": "SV-Lonsee",
+					"enemyClubId": "15033"
+				},
+				{
+					"enemyId": "2849076",
+					"enemyName": "TSV-Holzheim-II",
+					"enemyClubId": "15026"
+				},
+				{
+					"enemyId": "2846578",
+					"enemyName": "SC-Voehringen-II",
+					"enemyClubId": "15064"
+				},
+				{
+					"enemyId": "2847866",
+					"enemyName": "TSV-Illertissen",
+					"enemyClubId": "15029"
+				},
+				{
+					"enemyId": "2847762",
+					"enemyName": "ASV-Bellenberg",
+					"enemyClubId": "15006"
+				},
+				{
+					"enemyId": "2845918",
+					"enemyName": "TSV-Neu-Ulm-II",
+					"enemyClubId": "15041"
+				},
+				{
+					"enemyId": "2847841",
+					"enemyName": "TSF-Ludwigsfeld-II",
+					"enemyClubId": "15034"
+				},
+				{
+					"enemyId": "2846663",
+					"enemyName": "TTC-Setzingen-II",
+					"enemyClubId": "15016"
+				}
+			]
+		},
+		{
+			"league": "Herren-Kreisliga-B-Gr-3",
+			"groupId": "470630",
+			"teamId": "2846292",
+			"teamName": "TSG-Oberkirchberg-II",
+			"enemies": [
+				{
+					"enemyId": "2846632",
+					"enemyName": "TV-Wiblingen",
+					"enemyClubId": "15068"
+				},
+				{
+					"enemyId": "2848126",
+					"enemyName": "TSV-Seissen-III",
+					"enemyClubId": "15054"
+				},
+				{
+					"enemyId": "2846620",
+					"enemyName": "SV-Westerheim-II",
+					"enemyClubId": "15066"
+				},
+				{
+					"enemyId": "2848667",
+					"enemyName": "VfB-Ulm-III",
+					"enemyClubId": "15060"
+				},
+				{
+					"enemyId": "2848277",
+					"enemyName": "TSV-Herrlingen-IV",
+					"enemyClubId": "15025"
+				},
+				{
+					"enemyId": "2849120",
+					"enemyName": "TSV-Laichingen-III",
+					"enemyClubId": "15030"
+				},
+				{
+					"enemyId": "2846292",
+					"enemyName": "TSG-Oberkirchberg-II",
+					"enemyClubId": "15043"
+				}
+			]
+		}
+	]
+}

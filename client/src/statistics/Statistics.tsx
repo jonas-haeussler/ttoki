@@ -1,8 +1,7 @@
-import React, { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Container, Table } from "react-bootstrap";
-import { Player } from "../../../shared/types";
+import { Player } from "../types";
 import Loader from "../Loader";
-const Fade = require("react-reveal/Fade");
 
 const Statistics = () => {
 
@@ -15,8 +14,8 @@ const Statistics = () => {
     useEffect(() => {
         const loadPlayers = async () => {
             const url = `/api/myTTTeam`;
-            let res = await fetch(url.toString());
-            let myTTPlayerData = await res.json();
+            const res = await fetch(url.toString()).catch(rej => console.log(rej));
+            const myTTPlayerData = await res?.json().catch(rej => console.log(rej));
             if(myTTPlayerData && myTTPlayerData.length > 0) {
                 setPlayers(myTTPlayerData);
                 setFilteredPlayers(myTTPlayerData);
@@ -39,7 +38,6 @@ const Statistics = () => {
                 </thead>
                 <tbody>
                     {players.length === 0 ? <td colSpan={100} style={{backgroundColor:"lightgray"}}><Loader/></td> : filteredPlayers.map((player) => 
-                    <Fade bottom delay={0}>
                         <tr>
                             <td>{player.name}</td>
                             <td>{player.actions}</td>
@@ -48,8 +46,7 @@ const Statistics = () => {
                             <td style={player.ttr >= player.qttr ? {color:"green"} : {color:"red"}}>
                                 {player.ttr >= player.qttr ? '+' + (player.ttr - player.qttr):(player.ttr - player.qttr)}
                             </td>
-                        </tr>
-                    </Fade>)}
+                        </tr>)}
                 </tbody>
             </Table>
         </Container>

@@ -1,12 +1,11 @@
-import {Game, TTDate, TTDates, Venue} from '../shared/types';
-import {addNewGoogleConfig, createNewSpreadsheet, postTable} from './googleUtils';
+import {Game, TTDate, TTDates, Venue} from './types.js';
+import {addNewGoogleConfig, createNewSpreadsheet, postTable} from './googleUtils.js';
 import {DateTime} from 'luxon';
 import {v4 as uuid} from 'uuid';
-import {fetchTeams, getTablesFromHTML} from './myTTUtils';
+import {fetchTeams, getTablesFromHTML} from './myTTUtils.js';
 import parse from 'node-html-parser';
-import {getPlayersForTeam, readClubs, readTeamConfig, writeEnemies} from './utils';
+import {getPlayersForTeam, readClubs, readTeamConfig, writeEnemies} from './utils.js';
 import fetch from 'node-fetch';
-import { stringify } from 'querystring';
 
 
 /**
@@ -163,7 +162,7 @@ async function findEnemies(teamIndex:number):
       }
     }
   }
-  const config = readTeamConfig();
+  const config = await readTeamConfig();
   const response = await fetch(`https://www.mytischtennis.de/clicktt/TTBW/` +
   `${config.saison}/ligen/${config.teams[teamIndex].league}/gruppe/` +
   `${config.teams[teamIndex].groupId}/tabelle/${config.round}`);
@@ -177,6 +176,11 @@ async function findEnemies(teamIndex:number):
     if (link) {
       const enemy = parseLink(link);
       const clubs:{name:string, id:string}[] = readClubs();
+      if (typeof String.prototype.replaceAll === 'undefined') {
+        String.prototype.replaceAll = function(match, replace) {
+           return this.replace(new RegExp(match, 'g'), () => replace);
+        }
+      }
       const clubId:(string|undefined) = clubs.find(
           (el) => enemy?.enemyName.includes(el.name.replaceAll(' ', '-')
               .replaceAll('ö', 'oe').replaceAll('ä', 'ae').replaceAll('ü', 'ue')))?.id;

@@ -1,13 +1,14 @@
 /* eslint-disable camelcase */
 
-import express = require('express');
+import express from 'express';
 
-import bodyParser = require('body-parser');
+import bodyParser from 'body-parser';
 
-import {getAllPlayers, getDates, postPlayer} from './googleUtils';
-import {TTDate} from '../shared/types';
-import {getMyTTOkiTeamData, getUpcoming, login} from './myTTUtils';
+import {getAllPlayers, getDates, postPlayer} from './googleUtils.js';
+import {TTDate} from './types';
+import {getMyTTOkiTeamData, getUpcoming, login} from './myTTUtils.js';
 import {RequestInit} from 'node-fetch';
+import * as path from 'path';
 
 const PORT = process.env.PORT || 3001;
 
@@ -35,7 +36,6 @@ function loopLogIn() {
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('client/build'));
-  const path = require('path');
   app.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
   });

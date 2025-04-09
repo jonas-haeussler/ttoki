@@ -7,7 +7,7 @@
         "plugin:react/recommended",
         "google"
     ],
-    "parser": "@typescript-eslint/parser",
+    "parser": "@babel/eslint-parser",
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
@@ -20,6 +20,9 @@
         "@typescript-eslint"
     ],
     "rules": {
-        "max-len": [2, 100, 4, {"ignoreUrls": true}]
+        "max-len": [2, 100, 4, {"ignoreUrls": true}],
+        "rules":{
+            "linebreak-style": 0 
+          }
     }
 }

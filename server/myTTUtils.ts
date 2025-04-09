@@ -1,9 +1,9 @@
 import {DateTime} from 'luxon';
 import fetch, {RequestInit, Response} from 'node-fetch';
-import parse, {HTMLElement} from 'node-html-parser';
-import {Config, Player, Tables, Team} from '../shared/types';
-import {getDates, getAllPlayers} from './googleUtils';
-import {getPlayersForTeam, readClubs, readTeamConfig} from './utils';
+import {parse, HTMLElement} from 'node-html-parser';
+import {Config, Player, Tables, Team} from './types.js';
+import {getDates, getAllPlayers} from './googleUtils.js';
+import {getPlayersForTeam, readClubs, readTeamConfig} from './utils.js';
 
 /**
  * Login for mytischtennis
@@ -80,7 +80,7 @@ async function fetchTeam(saison:string,
  *
  */
 export async function fetchTeams():Promise<Response[]> {
-  const config:Config = readTeamConfig();
+  const config:Config = await readTeamConfig();
   const team1 = await fetchTeam(config.saison,
       config.teams[0].league,
       config.teams[0].groupId,
@@ -293,7 +293,7 @@ async function getEnemyPlayers(loginOpt:RequestInit,
   let enemy = undefined;
   let league = undefined;
   let groupId = undefined;
-  const config = readTeamConfig();
+  const config = await readTeamConfig();
   for (const team of config.teams) {
     enemy = team.enemies?.find((enemy) => enemy.enemyName === teamName.replace(/ /g, '-')
         .replace(/ö/g, 'oe').replace(/ä/g, 'ae').replace(/ü/g, 'ue'));
@@ -337,7 +337,6 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
       return DateTime.fromISO(d.date).diffNow().toMillis() > 0;
     }
   });
-  console.log(nextDateFirstTeam, nextDateSecondTeam);
   const playerObjectsFirst = nextDateFirstTeam?.availablePlayers.map((player) => {
     return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0};
   });

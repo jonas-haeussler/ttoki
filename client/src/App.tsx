@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
+import logo from './assets/logo.png';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Container, Nav, Navbar } from "react-bootstrap";
 import TabPanel from  "./organization/TabPanel";
 import Statistics from "./statistics/Statistics";
 import Upcoming from "./statistics/Upcoming";
 import Home from './Home';
-import PingPong from './fun/PingPong'
+import PingPong from './fun/PingPong';
+
 
 
 const App = () => {
@@ -33,7 +35,7 @@ const App = () => {
     <Navbar collapseOnSelect expand="lg" bg="dark" variant="dark" sticky="top" id={navbarId}>
       <Container fluid="md">
         <Navbar.Brand href="/"><img
-          src="/logo.png"
+          src={logo}
           width="25"
           height="25"
           padding-right="10"

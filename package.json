@@ -1,53 +1,17 @@
 {
-  "name": "server",
+  "name": "app",
   "version": "1.0.0",
-  "description": "",
-  "main": "server/index.ts",
+  "description": "The main package of the project",
   "scripts": {
+    "dev": "concurrently -n 'server,client' -c 'blue,green' \"npm run server\" \"npm run client\"",
+    "build": "npm run client-build && npm run server-build",
     "client": "cd client && npm run dev",
-    "build": "tsc -p . && tsc-alias -p ./tsconfig.json",
-    "start": "node ./server/build/server/index.js",
-    "init": "ts-node server/initSeason.ts",
-    "dev": "concurrently -n 'server,client' -c 'blue,green' \"nodemon server/index.ts\" \"npm run client\""
+    "server": "cd server && npm run dev",
+    "client-build": "cd client && npm run build",
+    "server-build": "cd server && npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Jonas Haeussler",
   "dependencies": {
-    "@types/body-parser": "^1.19.2",
-    "@types/express": "^4.17.13",
-    "@types/luxon": "^2.3.0",
-    "@types/node": "^17.0.21",
-    "@types/node-fetch": "^2.6.1",
-    "@types/tough-cookie": "^4.0.1",
-    "@types/uuid": "^8.3.4",
-    "body-parser": "^1.19.1",
-    "caniuse-lite": "^1.0.30001434",
-    "concurrently": "^7.0.0",
-    "express": "^4.17.2",
-    "form-data": "^4.0.0",
-    "googleapis": "^95.0.0",
-    "luxon": "^2.3.0",
-    "node": "^14.17.3",
-    "node-fetch": "^2.6.7",
-    "node-html-parser": "^5.2.0",
-    "nodemon": "^2.0.15",
-    "react-reveal": "^1.2.2",
-    "rimraf": "^3.0.2",
-    "tough-cookie": "^4.0.0",
-    "ts-loader": "^9.4.4",
-    "ts-node-dev": "^2.0.0",
-    "tsc-alias": "^1.8.7",
-    "uuid": "^8.3.2",
-    "yarn": "^1.22.19"
-  },
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.13.0",
-    "@typescript-eslint/parser": "^5.13.0",
-    "eslint": "^8.10.0",
-    "eslint-config-google": "^0.14.0",
-    "eslint-plugin-react": "^7.29.3",
-    "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "concurrently": "^8.2.2"
   }
 }

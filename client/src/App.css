@@ -32,3 +32,13 @@
 .custom-table tr:nth-of-type(5n) {
   border-bottom: 1.5px solid rgb(0, 0, 0);
 }
+.custom-table {
+  table-layout:fixed;
+  margin: 0;
+}
+.custom-table .team {
+  width: 40%; 
+}
+.custom-table .date {
+  width: 20%; 
+}

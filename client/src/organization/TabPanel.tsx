@@ -1,7 +1,6 @@
-import React, { useEffect } from "react";
 import { useState } from "react"
 import { Container, Tab, Tabs } from "react-bootstrap"
-import { TTDate } from "../../../shared/types";
+import { TTDate } from "../types";
 import { fetchDates } from "../main";
 
 import Insert from "./Insert";
@@ -15,11 +14,12 @@ const TabPanel = () => {
     const [loading, SetLoading] = useState<boolean>(false);
     const updateGameEntries = async () => {
         SetLoading(true);
-        const ttDates:TTDate[] = await fetchDates([]);
+        const ttDates = (await fetchDates([]).catch(rej => console.log(rej)));
         
-        console.log(ttDates);
-        SetTTDates(ttDates);
-        SetLoading(false);
+        if (ttDates) {
+            SetTTDates(ttDates);
+            SetLoading(false);
+        }
     }
     return (
         <Container fluid="md" className="content" style={{minHeight: "500px"}}>
@@ -27,7 +27,7 @@ const TabPanel = () => {
                 <Tab eventKey="insert" title="Eintragen">
                     <Insert />
                 </Tab>
-                <Tab eventKey="overview" title="Überblick" onClick={(e) => updateGameEntries()}>
+                <Tab eventKey="overview" title="Überblick" onClick={(_) => updateGameEntries()}>
                     <Overview ttDates={ttDates} loading={loading}/>
                 </Tab>  
                     

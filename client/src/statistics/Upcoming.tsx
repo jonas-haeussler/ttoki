@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Spinner, Table } from "react-bootstrap";
-import { Team } from "../../../shared/types";
+import { Team } from "../types";
 import Loader from "../Loader";
-const Fade = require("react-reveal/Fade");
+import { Fade } from "react-awesome-reveal";
 
 const TeamTable = (props:{team:Team | undefined}) => {
 
@@ -18,19 +18,19 @@ const TeamTable = (props:{team:Team | undefined}) => {
                     {!props.team ? <Loader /> : 
                     <>
                     <tr>
-                        <th>Spieler</th>{props.team.members.map((player) => <Fade bottom delay={0}><td>{player.name}</td></Fade>)}
+                        <th>Spieler</th>{props.team?.members.map((player) => <td >{player.name}</td>)}
                     </tr>
                     <tr>
-                        <th>Einsätze</th>{props.team.members.map((player) => <Fade bottom delay={0}><td>{player.actions}</td></Fade>)}
+                        <th>Einsätze</th>{props.team?.members.map((player) => <td >{player.actions}</td>)}
                     </tr>
                     <tr>
-                        <th>Bilanz</th>{props.team.members.map((player) => <Fade bottom delay={0}><td>{`${player.wins}:${player.loses}`}</td></Fade>)}
+                        <th>Bilanz</th>{props.team?.members.map((player) => <td >{`${player.wins}:${player.loses}`}</td>)}
                     </tr>
                     <tr>
-                        <th>TTR</th>{props.team.members.map((player) => <Fade bottom delay={0}><td>{player.ttr}</td></Fade>)}
+                        <th>TTR</th>{props.team?.members.map((player) => <td >{player.ttr}</td>)}
                     </tr>
                     <tr>
-                        <th>QTTR+-</th>{props.team.members.map((player) => <Fade bottom delay={0}><td style={player.ttr >= player.qttr ? {color:"green"} : {color:"red"}}>{player.ttr >= player.qttr ? '+' + (player.ttr - player.qttr):(player.ttr - player.qttr)}</td></Fade>)}
+                        <th>QTTR+-</th>{props.team?.members.map((player) => <td  style={player.ttr >= player.qttr ? {color:"green"} : {color:"red"}}>{player.ttr >= player.qttr ? '+' + (player.ttr - player.qttr):(player.ttr - player.qttr)}</td>)}
                     </tr></>
                     }
                 </tbody>
@@ -51,8 +51,8 @@ const Upcoming = () => {
     useEffect(() => {
         const loadUpcoming = async () => {
             const url = `/api/nextMatches`;
-            let res = await fetch(url.toString());
-            let teams = await res.json();
+            const res = await fetch(url.toString()).catch(rej => console.log(rej));
+            const teams = await res?.json().catch(rej => console.log(rej));
             console.log(teams.allies);
             if (teams) {
                 if (teams.allies.length === 2) {
@@ -72,10 +72,10 @@ const Upcoming = () => {
     return (
         <>
         <Container style={{marginTop: "2%"}} className="content">
-            <Fade bottom delay={100}>
+            <Fade direction="left" triggerOnce={true}>
                 <TeamTable team={team1}></TeamTable>
             </Fade>
-            <Fade bottom delay={200}>
+            <Fade direction="left" delay={1} triggerOnce={true}>
                 <TeamTable team={enemy1}></TeamTable>
             </Fade>
         </Container>
@@ -88,10 +88,10 @@ const Upcoming = () => {
         }}
         />
         <Container style={{marginTop: "2%"}} className="content">
-            <Fade bottom delay={400}>
+            <Fade direction="left" delay={2} triggerOnce={true}>
                 <TeamTable team={team2} ></TeamTable>
             </Fade>
-            <Fade bottom delay={500}>
+            <Fade direction="left" delay={3} triggerOnce={true}>
                 <TeamTable team={enemy2}></TeamTable>
             </Fade>
         </Container>
