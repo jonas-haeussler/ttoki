@@ -4,8 +4,11 @@
 /node_modules
 /client/node_modules
 /server/node_modules
+/server/teamConfig.json
+/server/googleConfigs.json
 /.pnp
 .pnp.js
+.env
 
 # testing
 /coverage

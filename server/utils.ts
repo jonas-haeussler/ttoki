@@ -1,67 +1,91 @@
-import {readFileSync, writeFileSync, createWriteStream} from 'fs';
+import { readFile, writeFile } from 'fs/promises';
 import {Config, GoogleConfig} from './types.js';
-import {DateTime, Duration} from 'luxon';
-import {getGoogleDrive} from './googleUtils.js';
+import { Mutex } from 'async-mutex';
+import { DateTime } from 'luxon';
 
-let teamConfigPath = './teamConfig.json';
+export let teamConfigPath = './teamConfig.json';
+export const teamLock = new Mutex();
+export const googleLock = new Mutex();
+export let clubConfigPath = './clubs.json';
+export let googleConfigPath = './googleConfigs.json';
+export let fetchTime = 10000;
 if (process.env.NODE_ENV === 'production') {
   teamConfigPath = '/tmp/teamConfig.json';
+  clubConfigPath = '/tmp/clubs.json';
+  googleConfigPath = '/tmp/googleConfigs.json';
+  fetchTime = 300000;
 }
-var lastGoogleSyncTeams: DateTime = DateTime.fromMillis(0);
+
+let cachedTeamConfig:Config = null;
+let lastTimeTeamConfigFetched = DateTime.now();
+let cachedGoogleConfigs:Array<GoogleConfig> = null;
+let lastTimeGoogleConfigFetched = DateTime.now();
 /**
  * 
  */
-export async function readTeamConfig():Promise<Config> {
-  let promiseResolve, promiseReject;
-  const result = new Promise<Config>(function(resolve, reject){
-    promiseResolve = resolve;
-    promiseReject = reject;
-  });
-  if (-lastGoogleSyncTeams.diffNow().milliseconds > 300000) {
-    console.log("Getting team config from drive");
-    const drive = await getGoogleDrive();
-    const writeStream = createWriteStream(teamConfigPath);
-    const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "stream"});
-    
-    raw.data.on('end', () => {
-      const rawContent = readFileSync(teamConfigPath).toString();
-      const configs = JSON.parse(rawContent) as Array<GoogleConfig>;
-      promiseResolve(configs);
-    });
-    raw.data.on('error', err => {
-      promiseReject(err);
-    })
-    raw.data.pipe(writeStream);
-    lastGoogleSyncTeams = DateTime.now();
-  }
-  else {
-    console.log("Getting team config from local");
-    const raw = readFileSync(teamConfigPath).toString();
-    const config:Config = JSON.parse(raw) as Config;
-    promiseResolve(config);
-  }
-  return await result;
+export async function getTeamConfigLocal():Promise<Config> {
+    if (lastTimeTeamConfigFetched.diffNow().milliseconds < fetchTime && cachedTeamConfig !== null)
+      return structuredClone(cachedTeamConfig);
+    if (process.env.NODE_ENV !== 'production')
+      console.log("Getting team config from local");
+    try {
+      const raw = (await safeReadFile(teamConfigPath, teamLock)).toString();
+      const config:Config = JSON.parse(raw) as Config;
+      cachedTeamConfig = config;
+      return structuredClone(config);
+    } catch(error) {
+      console.error("Failed to read file " + teamConfigPath);
+    }
+    return undefined;
 }
 /**
  * 
  * @returns 
  */
-export function readClubs():{name:string, id:string}[] {
-  const raw = readFileSync('./clubs.json').toString();
+export async function readClubs():Promise<{name:string, id:string}[]> {
+  const raw = (await readFile(clubConfigPath)).toString();
   const clubs = JSON.parse(raw);
   return clubs;
+}
+/**
+ * 
+ * @returns 
+ */
+export async function getGoogleConfigsLocal():Promise<GoogleConfig[]> {
+  if (lastTimeGoogleConfigFetched.diffNow().milliseconds < fetchTime && cachedGoogleConfigs !== null) {
+      return structuredClone(cachedGoogleConfigs);
+  }
+  if (process.env.NODE_ENV !== 'production')
+    console.log("Getting local googleConfig");
+  try {
+    const rawContent = await safeReadFile(googleConfigPath, googleLock);
+    const configs = JSON.parse(rawContent) as Array<GoogleConfig>;
+    cachedGoogleConfigs = configs;
+    return structuredClone(configs);
+  } catch(error) {
+    console.log("Failed to load file: " + googleConfigPath);
+  }
+  return undefined;
+}
+/**
+ * 
+ * @returns 
+ */
+export async function getGoogleConfig():Promise<GoogleConfig> {
+  const configs = await getGoogleConfigsLocal(); 
+  return configs?.pop()!;
 }
 /**
 * 
 * @param enemies 
 */
-export function writeEnemies(enemies:{enemyId:string, enemyName:string, enemyClubId:string}[][]) {
-  const raw = readFileSync(teamConfigPath).toString();
+export async function writeEnemies(enemies:{enemyId:string, enemyName:string, enemyClubId:string}[][]):Promise<void> {
+  const raw = (await safeReadFile(teamConfigPath, teamLock)).toString();
   const config:Config = JSON.parse(raw) as Config;
   for (let i = 0; i < config.teams.length; i++) {
     config.teams[i].enemies = enemies[i];
   }
-  writeFileSync(teamConfigPath, JSON.stringify(config, null, '\t'));
+  await safeWriteFile(teamConfigPath, JSON.stringify(config, null, '\t'), teamLock);
 }
 
 /**
@@ -81,4 +105,16 @@ export function getPlayersForTeam(table: string[][]):string[] {
     }
   }
   return arr;
+}
+
+export async function safeReadFile(filePath: string, lock: Mutex): Promise<string> {
+  return lock.runExclusive(async () => {
+    return await readFile(filePath, 'utf-8');
+  });
+}
+
+export async function safeWriteFile(filePath: string, data: string, lock: Mutex) {
+  return lock.runExclusive(async () => {
+    await writeFile(filePath, data, 'utf-8');
+  });
 }

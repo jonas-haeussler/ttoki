@@ -1,106 +1,111 @@
 {
-	"saison": "24-25",
+	"saison": "25-26",
 	"round": "vr",
 	"vereinId": "15043",
 	"teams": [
 		{
-			"league": "Herren-Bezirksklasse-Gr-1",
-			"groupId": "470846",
-			"teamId": "2846595",
+			"league": "Erwachsene-Bezirksklasse-Gr-1",
+			"groupId": "494252",
+			"teamId": "2958043",
 			"teamName": "TSG-Oberkirchberg",
 			"enemies": [
 				{
-					"enemyId": "2846595",
+					"enemyId": "2960051",
+					"enemyName": "TSV-Obenhausen",
+					"enemyClubId": "15042"
+				},
+				{
+					"enemyId": "2958006",
+					"enemyName": "TSV-Langenau",
+					"enemyClubId": "15031"
+				},
+				{
+					"enemyId": "2958305",
+					"enemyName": "TTC-Witzighausen",
+					"enemyClubId": "15069"
+				},
+				{
+					"enemyId": "2958048",
+					"enemyName": "SSV-Ulm-1846-IV",
+					"enemyClubId": "15061"
+				},
+				{
+					"enemyId": "2957442",
+					"enemyName": "SV-Nersingen",
+					"enemyClubId": "15040"
+				},
+				{
+					"enemyId": "2958043",
 					"enemyName": "TSG-Oberkirchberg",
 					"enemyClubId": "15043"
 				},
 				{
-					"enemyId": "2846416",
-					"enemyName": "TTC-Senden-Hoell",
-					"enemyClubId": "15055"
-				},
-				{
-					"enemyId": "2846880",
-					"enemyName": "SV-Lonsee",
-					"enemyClubId": "15033"
-				},
-				{
-					"enemyId": "2849076",
-					"enemyName": "TSV-Holzheim-II",
-					"enemyClubId": "15026"
-				},
-				{
-					"enemyId": "2846578",
+					"enemyId": "2961675",
 					"enemyName": "SC-Voehringen-II",
 					"enemyClubId": "15064"
 				},
 				{
-					"enemyId": "2847866",
-					"enemyName": "TSV-Illertissen",
-					"enemyClubId": "15029"
+					"enemyId": "2960307",
+					"enemyName": "TTC-Senden-Hoell",
+					"enemyClubId": "15055"
 				},
 				{
-					"enemyId": "2847762",
-					"enemyName": "ASV-Bellenberg",
-					"enemyClubId": "15006"
+					"enemyId": "2959315",
+					"enemyName": "SV-Lonsee",
+					"enemyClubId": "15033"
 				},
 				{
-					"enemyId": "2845918",
-					"enemyName": "TSV-Neu-Ulm-II",
-					"enemyClubId": "15041"
+					"enemyId": "2957473",
+					"enemyName": "TSV-Holzheim-II",
+					"enemyClubId": "15026"
 				},
 				{
-					"enemyId": "2847841",
+					"enemyId": "2958198",
 					"enemyName": "TSF-Ludwigsfeld-II",
 					"enemyClubId": "15034"
-				},
-				{
-					"enemyId": "2846663",
-					"enemyName": "TTC-Setzingen-II",
-					"enemyClubId": "15016"
 				}
 			]
 		},
 		{
-			"league": "Herren-Kreisliga-B-Gr-3",
-			"groupId": "470630",
-			"teamId": "2846292",
+			"league": "Erwachsene-Kreisliga-B-Gr-2",
+			"groupId": "494843",
+			"teamId": "2961130",
 			"teamName": "TSG-Oberkirchberg-II",
 			"enemies": [
 				{
-					"enemyId": "2846632",
-					"enemyName": "TV-Wiblingen",
-					"enemyClubId": "15068"
+					"enemyId": "2960207",
+					"enemyName": "TSG-Rottenacker",
+					"enemyClubId": "15051"
 				},
 				{
-					"enemyId": "2848126",
-					"enemyName": "TSV-Seissen-III",
-					"enemyClubId": "15054"
+					"enemyId": "2959965",
+					"enemyName": "TTC-Ehingen-III",
+					"enemyClubId": "15017"
 				},
 				{
-					"enemyId": "2846620",
-					"enemyName": "SV-Westerheim-II",
-					"enemyClubId": "15066"
+					"enemyId": "2958641",
+					"enemyName": "RSV-Ermingen",
+					"enemyClubId": "15020"
 				},
 				{
-					"enemyId": "2848667",
-					"enemyName": "VfB-Ulm-III",
-					"enemyClubId": "15060"
+					"enemyId": "2961685",
+					"enemyName": "TSV-Schelklingen",
+					"enemyClubId": "15052"
 				},
 				{
-					"enemyId": "2848277",
-					"enemyName": "TSV-Herrlingen-IV",
-					"enemyClubId": "15025"
+					"enemyId": "2960139",
+					"enemyName": "TSF-Ludwigsfeld-V",
+					"enemyClubId": "15034"
 				},
 				{
-					"enemyId": "2849120",
-					"enemyName": "TSV-Laichingen-III",
-					"enemyClubId": "15030"
-				},
-				{
-					"enemyId": "2846292",
+					"enemyId": "2961130",
 					"enemyName": "TSG-Oberkirchberg-II",
 					"enemyClubId": "15043"
+				},
+				{
+					"enemyId": "2959377",
+					"enemyName": "SV-Unterstadion-II",
+					"enemyClubId": "15062"
 				}
 			]
 		}

@@ -1,0 +1,19 @@
+{
+	"saison": "<saison>",
+	"round": "<round>",
+	"vereinId": "<vereinId>",
+	"teams": [
+		{
+			"league": "<league>",
+			"groupId": "<groupId>",
+			"teamId": "<teamId>",
+			"teamName": "<teamName>"
+		},
+		{
+			"league": "<league>",
+			"groupId": "<groupId>",
+			"teamId": "<teamId>",
+			"teamName": "<teamName>"
+		}
+	]
+}

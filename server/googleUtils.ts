@@ -1,16 +1,10 @@
 /* eslint-disable camelcase */
-
+import { once } from 'events'; // native Node utility
 import {google, sheets_v4, drive_v3} from 'googleapis';
 import {DateTime, Duration} from 'luxon';
 import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from './types.js';
 import {v4 as uuid} from 'uuid';
-import {readFileSync, writeFileSync, createWriteStream} from 'fs';
-
-let googleConfigPath = './googleConfigs.json';
-if (process.env.NODE_ENV === 'production') {
-  googleConfigPath = '/tmp/googleConfigs.json';
-}
-var lastGoogleSyncConfig: DateTime = DateTime.fromMillis(0);
+import { getGoogleConfig, getGoogleConfigsLocal, googleConfigPath, googleLock, safeReadFile, safeWriteFile, teamConfigPath, teamLock } from './utils.js';
 /**
  * 
  * @returns 
@@ -37,7 +31,7 @@ function getGoogleCredentials():Object | undefined {
  * 
  * @returns 
  */
-export async function getGoogleDrive():Promise<drive_v3.Drive | undefined> {
+export function getGoogleDrive():drive_v3.Drive | undefined {
   const credentials = getGoogleCredentials();
   const auth = new google.auth.GoogleAuth({
     credentials: credentials,
@@ -75,55 +69,72 @@ function getPlayerRange(playerIndex:number, dateIndex:number):string {
  * 
  * @param config 
  */
-export async function addNewGoogleConfig(config:GoogleConfig) {
-  const configs = await getGoogleConfigs();
+export async function addNewGoogleConfigDrive(config:GoogleConfig):Promise<void> {
+  await fetchGoogleConfigsDrive();
+  const configs = await getGoogleConfigsLocal();
   configs.push(config);
-  writeFileSync(googleConfigPath, JSON.stringify(configs));
+  await safeWriteFile(googleConfigPath, JSON.stringify(configs), googleLock);
+  //todo -> push to drive
 }
 
 /**
  * 
  * @returns 
  */
-async function getGoogleConfigs():Promise<GoogleConfig[]> {
-  let promiseResolve, promiseReject;
-  const result = new Promise<GoogleConfig[]>(function(resolve, reject){
-    promiseResolve = resolve;
-    promiseReject = reject;
-  });
-  if (-lastGoogleSyncConfig.diffNow().milliseconds > 300000) {
-    console.log("Getting googleConfig from drive");
-    const drive = await getGoogleDrive();
-    const writeStream = createWriteStream(googleConfigPath);
-    const raw = await drive.files.get({ fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", alt: "media" }, {responseType: "stream"});
-    
-    raw.data.on('end', () => {
-      const rawContent = readFileSync(googleConfigPath).toString();
-      const configs = JSON.parse(rawContent) as Array<GoogleConfig>;
-      promiseResolve(configs);
-    });
-    raw.data.on('error', err => {
-      promiseReject(err);
-    })
-    raw.data.pipe(writeStream);
-    lastGoogleSyncConfig = DateTime.now();
+export async function fetchGoogleConfigsDrive():Promise<void> {
+  if (process.env.NODE_ENV !== 'production')
+  console.log("Getting googleConfig from drive");
+  const drive = getGoogleDrive();
+  try {
+    const raw = await drive.files.get({ fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", alt: "media" }, {responseType: "text"});
+    await safeWriteFile(googleConfigPath, raw.data, googleLock);
+  } catch (err) {
+    console.error('Error writing file:', err);
+    throw err;
   }
-  else {
-    console.log("Getting local googleConfig");
-    const rawContent = readFileSync(googleConfigPath).toString();
-    const configs = JSON.parse(rawContent) as Array<GoogleConfig>;
-    promiseResolve(configs);
-  }
-  return await result;
 }
 /**
  * 
  * @returns 
  */
-async function getGoogleConfig():Promise<GoogleConfig> {
-  const configs = await getGoogleConfigs(); 
-  return configs.pop()!;
+export async function uploadGoogleConfigsDrive():Promise<void> {
+  if (process.env.NODE_ENV !== 'production')
+    console.log("Uploading googleConfig to drive (overwrite)");
+
+  const drive = getGoogleDrive();
+
+  try {
+    const res = await drive.files.update({
+      fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", // same fileId as in fetch
+      media: {
+        mimeType: 'application/json',
+        body: await safeReadFile(googleConfigPath, googleLock)
+      }
+    });
+
+    console.log('File successfully overwritten. Drive file ID:', res.data.id);
+  } catch (err) {
+    console.error('Error uploading file:', err);
+    throw err;
+  }
 }
+
+/**
+ * 
+ */
+export async function fetchTeamConfigDrive():Promise<void> {
+  if (process.env.NODE_ENV !== 'production')
+    console.log("Getting team config from drive");
+  const drive = getGoogleDrive();
+  try {
+  const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "stream"});
+  await safeWriteFile(teamConfigPath, raw.data, teamLock);
+  } catch (err) {
+      console.error('Error writing file:', err);
+      throw err;
+  }
+}
+
 
 /**
  * 
@@ -143,7 +154,7 @@ async function getRangeData(sheets:sheets_v4.Sheets, ranges:string[]) {
  *
  */
 export async function createNewSpreadsheet():Promise<string|undefined> {
-  const drive = await getGoogleDrive();
+  const drive = getGoogleDrive();
   if (drive) {
     const spreadSheetId = (await drive.files.create({
       requestBody: {
@@ -167,6 +178,8 @@ export async function getAllPlayers():
 Promise<{team:string, name:string, nickName:string}[] | undefined> {
   const sheets = await getGoogleSheets();
   const googleConfig = await getGoogleConfig();
+  if (googleConfig === undefined)
+    return undefined;
   try {
     const data = (await sheets.spreadsheets.values.get({
       spreadsheetId: googleConfig.spreadSheetId,
@@ -231,6 +244,8 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
   // eslint-disable-next-line camelcase
   const sheets:sheets_v4.Sheets = await getGoogleSheets();
   const googleConfig = await getGoogleConfig();
+  if (googleConfig === undefined)
+    return undefined;
   const ranges = [
     googleConfig.ranges.dates,
     googleConfig.ranges.gamesFirstTeam,

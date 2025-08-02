@@ -3,7 +3,7 @@ import fetch, {RequestInit, Response} from 'node-fetch';
 import {parse, HTMLElement} from 'node-html-parser';
 import {Config, Player, Tables, Team} from './types.js';
 import {getDates, getAllPlayers} from './googleUtils.js';
-import {getPlayersForTeam, readClubs, readTeamConfig} from './utils.js';
+import {getPlayersForTeam, readClubs, getTeamConfigLocal} from './utils.js';
 
 /**
  * Login for mytischtennis
@@ -80,7 +80,7 @@ async function fetchTeam(saison:string,
  *
  */
 export async function fetchTeams():Promise<Response[]> {
-  const config:Config = await readTeamConfig();
+  const config:Config = await getTeamConfigLocal();
   const team1 = await fetchTeam(config.saison,
       config.teams[0].league,
       config.teams[0].groupId,
@@ -227,8 +227,9 @@ async function getPlayerStats(
  * @return {string}
  */
 function getTTRLink(quartal:boolean, clubId:string) {
-  return quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW&ttrQuartalorAktuell=quartal` :
+  const link = quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW&ttrQuartalorAktuell=quartal` :
     `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW`;
+  return link;
 }
 
 /**
@@ -267,7 +268,7 @@ async function getStatisticsForPlayers(loginOpt:RequestInit,
 export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]> {
   const players:({team:string, name:string, nickName:string}[]|undefined) = await getAllPlayers();
   if (players === undefined) return [];
-  const clubs:{name:string, id:string}[] = readClubs();
+  const clubs:{name:string, id:string}[] = await readClubs();
   const clubId:(string | undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
   const playerObjects = players.map((player) => {
     return {team: Number.parseInt(player.team),
@@ -293,7 +294,7 @@ async function getEnemyPlayers(loginOpt:RequestInit,
   let enemy = undefined;
   let league = undefined;
   let groupId = undefined;
-  const config = await readTeamConfig();
+  const config = await getTeamConfigLocal();
   for (const team of config.teams) {
     enemy = team.enemies?.find((enemy) => enemy.enemyName === teamName.replace(/ /g, '-')
         .replace(/ö/g, 'oe').replace(/ä/g, 'ae').replace(/ü/g, 'ue'));
@@ -342,7 +343,7 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
   });
   const allies:Team[] = [];
   const enemies:Team[] = [];
-  const clubs:{name:string, id:string}[] = readClubs();
+  const clubs:{name:string, id:string}[] = await readClubs();
   const clubId:(string|undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
   if (playerObjectsFirst && clubId) {
     allies.push({

@@ -4,11 +4,17 @@ import express from 'express';
 
 import bodyParser from 'body-parser';
 
-import {getAllPlayers, getDates, postPlayer} from './googleUtils.js';
+import {getAllPlayers, getDates, postPlayer, fetchGoogleConfigsDrive, fetchTeamConfigDrive} from './googleUtils.js';
 import {TTDate} from './types';
 import {getMyTTOkiTeamData, getUpcoming, login} from './myTTUtils.js';
 import {RequestInit} from 'node-fetch';
 import * as path from 'path';
+import { fetchTime } from './utils.js';
+import dotenv from 'dotenv';
+
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const PORT = process.env.PORT || 3001;
 
@@ -16,22 +22,27 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 
 let opt:RequestInit;
-/* login().then((res) => {
-  opt = res;
-  loopLogIn();
-});
 
-**
- *
- *
-function loopLogIn() {
-  setTimeout(async () => {
-    console.log('Relogging in to mytischtennis');
-    opt = await login();
-    loopLogIn();
-  }, 3600000);
+fetchGoogleConfigsDrive();
+fetchTeamConfigDrive();
+setInterval(async() => {
+  try {
+    await fetchGoogleConfigsDrive();
+    await fetchTeamConfigDrive();
+  } catch(err) {
+    console.error("Failed to fetch google configs from drive");
+  }
+}, fetchTime)
+
+async function UpdateMyTTR() {
+  const loginOpt = await login();
+  app.locals.upcoming = await getUpcoming(loginOpt);
+  app.locals.statistics = await getMyTTOkiTeamData(loginOpt);
 }
-*/
+UpdateMyTTR();
+setInterval(async() => {
+  await UpdateMyTTR();
+}, 3600000)
 
 
 if (process.env.NODE_ENV === 'production') {
@@ -74,20 +85,8 @@ app.post('/api/player', bodyParser.json(), async (req, res) => {
   const answer = await postPlayer(date);
 });
 app.get('/api/myTTTeam', async (req, res) => {
-  let myTTTeamData = await getMyTTOkiTeamData(opt);
-  if (myTTTeamData.every((player) => player.ttr === 0)) {
-    opt = await login();
-    myTTTeamData = await getMyTTOkiTeamData(opt);
-  }
-  res.json(myTTTeamData);
+  res.json(app.locals.statistics);
 });
 app.get('/api/nextMatches', async (req, res) => {
-  let teams = await getUpcoming(opt);
-  for (const ally of teams.allies) {
-    if (ally.members.every((member) => member.ttr === 0)) {
-      opt = await login();
-      teams = await getUpcoming(opt);
-    }
-  }
-  res.json(teams);
+  res.json(app.locals.upcoming);
 });

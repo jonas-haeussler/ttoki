@@ -1,10 +1,10 @@
 import {Game, TTDate, TTDates, Venue} from './types.js';
-import {addNewGoogleConfig, createNewSpreadsheet, postTable} from './googleUtils.js';
+import {addNewGoogleConfigDrive, createNewSpreadsheet, fetchGoogleConfigsDrive, fetchTeamConfigDrive, postTable} from './googleUtils.js';
 import {DateTime} from 'luxon';
 import {v4 as uuid} from 'uuid';
 import {fetchTeams, getTablesFromHTML} from './myTTUtils.js';
-import parse from 'node-html-parser';
-import {getPlayersForTeam, readClubs, readTeamConfig, writeEnemies} from './utils.js';
+import {parse} from 'node-html-parser';
+import {getPlayersForTeam, readClubs, writeEnemies, getTeamConfigLocal} from './utils.js';
 import fetch from 'node-fetch';
 
 
@@ -99,7 +99,7 @@ async function initTable() {
   const ttDates:TTDates = await loadMatches();
   const spreadSheetId = await createNewSpreadsheet();
   if (spreadSheetId) {
-    addNewGoogleConfig({
+    await addNewGoogleConfigDrive({
       spreadSheetId: spreadSheetId,
       ranges: {
         meta: 'Sheet1!A1:B7',
@@ -135,7 +135,7 @@ async function initTable() {
         i--;
       }
     }
-    postTable([dateValues],
+    await postTable([dateValues],
         [firstTeamEnemies, firstTeamVenues, firstTeamTimes],
         [secondTeamEnemies, secondTeamVenues, secondTeamTimes],
         ttDates.allPlayers.map((player) => {
@@ -162,7 +162,7 @@ async function findEnemies(teamIndex:number):
       }
     }
   }
-  const config = await readTeamConfig();
+  const config = await getTeamConfigLocal();
   const response = await fetch(`https://www.mytischtennis.de/clicktt/TTBW/` +
   `${config.saison}/ligen/${config.teams[teamIndex].league}/gruppe/` +
   `${config.teams[teamIndex].groupId}/tabelle/${config.round}`);
@@ -175,7 +175,7 @@ async function findEnemies(teamIndex:number):
     const link = cell?.getAttribute('href');
     if (link) {
       const enemy = parseLink(link);
-      const clubs:{name:string, id:string}[] = readClubs();
+      const clubs:{name:string, id:string}[] = await readClubs();
       if (typeof String.prototype.replaceAll === 'undefined') {
         String.prototype.replaceAll = function(match, replace) {
            return this.replace(new RegExp(match, 'g'), () => replace);
@@ -197,5 +197,21 @@ async function findEnemies(teamIndex:number):
 async function initAllEnemies() {
   writeEnemies([await findEnemies(0), await findEnemies(1)]);
 }
-initTable();
-initAllEnemies();
+(async () => {
+  try {
+    console.log("Fetching configs from google drive");
+    await fetchGoogleConfigsDrive();
+    await fetchTeamConfigDrive();
+    console.log("Finished");
+    console.log("Initialize tables");
+    await initTable();
+    console.log("Finished");
+    console.log("Update configs on google drive");
+    await initAllEnemies();
+    console.log("Finished");
+  } catch (err) {
+    console.error("Something went wrong on init:", err);
+    process.exit(1); // Exit with error code
+  }
+})();
+
