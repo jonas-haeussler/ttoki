@@ -4,7 +4,7 @@ import {google, sheets_v4, drive_v3} from 'googleapis';
 import {DateTime, Duration} from 'luxon';
 import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from './types.js';
 import {v4 as uuid} from 'uuid';
-import { getGoogleConfig, getGoogleConfigsLocal, googleConfigPath, googleLock, safeReadFile, safeWriteFile, teamConfigPath, teamLock } from './utils.js';
+import { clubConfigPath, clubLock, getGoogleConfig, getGoogleConfigsLocal, googleConfigPath, googleLock, safeReadFile, safeWriteFile, teamConfigPath, teamLock } from './utils.js';
 /**
  * 
  * @returns 
@@ -83,11 +83,27 @@ export async function addNewGoogleConfigDrive(config:GoogleConfig):Promise<void>
  */
 export async function fetchGoogleConfigsDrive():Promise<void> {
   if (process.env.NODE_ENV !== 'production')
-  console.log("Getting googleConfig from drive");
+    console.log("Getting googleConfig from drive");
   const drive = getGoogleDrive();
   try {
     const raw = await drive.files.get({ fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", alt: "media" }, {responseType: "text"});
-    await safeWriteFile(googleConfigPath, raw.data, googleLock);
+    await safeWriteFile(googleConfigPath, raw.data as string, googleLock);
+  } catch (err) {
+    console.error('Error writing file:', err);
+    throw err;
+  }
+}
+/**
+ * 
+ * @returns 
+ */
+export async function fetchClubConfigDrive():Promise<void> {
+  if (process.env.NODE_ENV !== 'production')
+    console.log("Getting googleConfig from drive");
+  const drive = getGoogleDrive();
+  try {
+    const raw = await drive.files.get({ fileId: "1K6upNCtoedjMyrLRv14-r012OhyyclXs", alt: "media" }, {responseType: "text"});
+    await safeWriteFile(clubConfigPath, raw.data as string, clubLock);
   } catch (err) {
     console.error('Error writing file:', err);
     throw err;
@@ -127,8 +143,8 @@ export async function fetchTeamConfigDrive():Promise<void> {
     console.log("Getting team config from drive");
   const drive = getGoogleDrive();
   try {
-  const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "stream"});
-  await safeWriteFile(teamConfigPath, raw.data, teamLock);
+  const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "text"});
+  await safeWriteFile(teamConfigPath, raw.data as string, teamLock);
   } catch (err) {
       console.error('Error writing file:', err);
       throw err;

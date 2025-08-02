@@ -6,6 +6,7 @@
 /server/node_modules
 /server/teamConfig.json
 /server/googleConfigs.json
+/server/clubs.json
 /.pnp
 .pnp.js
 .env

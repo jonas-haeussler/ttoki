@@ -6,6 +6,7 @@ import { DateTime } from 'luxon';
 export let teamConfigPath = './teamConfig.json';
 export const teamLock = new Mutex();
 export const googleLock = new Mutex();
+export const clubLock = new Mutex();
 export let clubConfigPath = './clubs.json';
 export let googleConfigPath = './googleConfigs.json';
 export let fetchTime = 10000;
@@ -43,7 +44,7 @@ export async function getTeamConfigLocal():Promise<Config> {
  * @returns 
  */
 export async function readClubs():Promise<{name:string, id:string}[]> {
-  const raw = (await readFile(clubConfigPath)).toString();
+  const raw = (await safeReadFile(clubConfigPath, clubLock)).toString();
   const clubs = JSON.parse(raw);
   return clubs;
 }

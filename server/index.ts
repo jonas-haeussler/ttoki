@@ -4,7 +4,7 @@ import express from 'express';
 
 import bodyParser from 'body-parser';
 
-import {getAllPlayers, getDates, postPlayer, fetchGoogleConfigsDrive, fetchTeamConfigDrive} from './googleUtils.js';
+import {getAllPlayers, getDates, postPlayer, fetchGoogleConfigsDrive, fetchTeamConfigDrive, fetchClubConfigDrive} from './googleUtils.js';
 import {TTDate} from './types';
 import {getMyTTOkiTeamData, getUpcoming, login} from './myTTUtils.js';
 import {RequestInit} from 'node-fetch';
@@ -33,6 +33,7 @@ async function UpdateMyTTR() {
 async function init() {
   await fetchGoogleConfigsDrive();
   await fetchTeamConfigDrive();
+  await fetchClubConfigDrive();
   await UpdateMyTTR();
 }
 
@@ -82,6 +83,7 @@ init().then(() => {
   try {
     await fetchGoogleConfigsDrive();
     await fetchTeamConfigDrive();
+    await fetchClubConfigDrive();
   } catch(err) {
     console.error("Failed to fetch google configs from drive");
   }
