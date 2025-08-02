@@ -23,26 +23,18 @@ const app = express();
 
 let opt:RequestInit;
 
-fetchGoogleConfigsDrive();
-fetchTeamConfigDrive();
-setInterval(async() => {
-  try {
-    await fetchGoogleConfigsDrive();
-    await fetchTeamConfigDrive();
-  } catch(err) {
-    console.error("Failed to fetch google configs from drive");
-  }
-}, fetchTime)
 
 async function UpdateMyTTR() {
   const loginOpt = await login();
   app.locals.upcoming = await getUpcoming(loginOpt);
   app.locals.statistics = await getMyTTOkiTeamData(loginOpt);
 }
-UpdateMyTTR();
-setInterval(async() => {
+
+async function init() {
+  await fetchGoogleConfigsDrive();
+  await fetchTeamConfigDrive();
   await UpdateMyTTR();
-}, 3600000)
+}
 
 
 if (process.env.NODE_ENV === 'production') {
@@ -60,11 +52,6 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.resolve(__dirname, '..', 'client', 'build', 'index.html'));
   });
 }
-
-app.listen(PORT as number, () => {
-  console.log(`Server listening on ${PORT}`);
-});
-
 app.get('/api/players', async (req, res) => {
   const players = await getAllPlayers();
   console.log('Getting players from Google Sheets');
@@ -89,4 +76,23 @@ app.get('/api/myTTTeam', async (req, res) => {
 });
 app.get('/api/nextMatches', async (req, res) => {
   res.json(app.locals.upcoming);
+});
+init().then(() => {
+  setInterval(async() => {
+  try {
+    await fetchGoogleConfigsDrive();
+    await fetchTeamConfigDrive();
+  } catch(err) {
+    console.error("Failed to fetch google configs from drive");
+  }
+}, fetchTime);
+
+
+  setInterval(async() => {
+    await UpdateMyTTR();
+  }, 3600000);
+  app.listen(PORT as number, () => {
+    console.log(`Server listening on ${PORT}`);
+  });
+
 });
