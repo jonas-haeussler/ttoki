@@ -5,6 +5,7 @@ import {DateTime, Duration} from 'luxon';
 import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from './types.js';
 import {v4 as uuid} from 'uuid';
 import { clubConfigPath, clubLock, getGoogleConfig, getGoogleConfigsLocal, googleConfigPath, googleLock, safeReadFile, safeWriteFile, teamConfigPath, teamLock } from './utils.js';
+import logger from './logger.js';
 /**
  * 
  * @returns 
@@ -70,7 +71,7 @@ function getPlayerRange(playerIndex:number, dateIndex:number):string {
  * @param config 
  */
 export async function addNewGoogleConfigDrive(config:GoogleConfig):Promise<void> {
-  await fetchGoogleConfigsDrive();
+  await tryFetchGoogleConfigsDrive();
   const configs = await getGoogleConfigsLocal();
   configs.push(config);
   await safeWriteFile(googleConfigPath, JSON.stringify(configs), googleLock);
@@ -81,15 +82,15 @@ export async function addNewGoogleConfigDrive(config:GoogleConfig):Promise<void>
  * 
  * @returns 
  */
-export async function fetchGoogleConfigsDrive():Promise<void> {
+export async function tryFetchGoogleConfigsDrive():Promise<void> {
   if (process.env.NODE_ENV !== 'production')
-    console.log("Getting googleConfig from drive");
+    logger.debug("Getting googleConfig from drive");
   const drive = getGoogleDrive();
   try {
     const raw = await drive.files.get({ fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", alt: "media" }, {responseType: "text"});
     await safeWriteFile(googleConfigPath, raw.data as string, googleLock);
   } catch (err) {
-    console.error('Error writing file:', err);
+    logger.error('Error writing file:', err);
     throw err;
   }
 }
@@ -97,15 +98,14 @@ export async function fetchGoogleConfigsDrive():Promise<void> {
  * 
  * @returns 
  */
-export async function fetchClubConfigDrive():Promise<void> {
-  if (process.env.NODE_ENV !== 'production')
-    console.log("Getting googleConfig from drive");
+export async function tryFetchClubConfigDrive():Promise<void> {
+  logger.debug("Getting googleConfig from drive");
   const drive = getGoogleDrive();
   try {
     const raw = await drive.files.get({ fileId: "1K6upNCtoedjMyrLRv14-r012OhyyclXs", alt: "media" }, {responseType: "text"});
     await safeWriteFile(clubConfigPath, raw.data as string, clubLock);
   } catch (err) {
-    console.error('Error writing file:', err);
+    logger.error('Error writing file:', err);
     throw err;
   }
 }
@@ -138,15 +138,15 @@ export async function uploadGoogleConfigsDrive():Promise<void> {
 /**
  * 
  */
-export async function fetchTeamConfigDrive():Promise<void> {
+export async function tryFetchTeamConfigDrive():Promise<void> {
   if (process.env.NODE_ENV !== 'production')
-    console.log("Getting team config from drive");
+    logger.debug("Getting team config from drive");
   const drive = getGoogleDrive();
   try {
-  const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "text"});
-  await safeWriteFile(teamConfigPath, raw.data as string, teamLock);
+    const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "text"});
+    await safeWriteFile(teamConfigPath, raw.data as string, teamLock);
   } catch (err) {
-      console.error('Error writing file:', err);
+      logger.error('Error writing file:', err);
       throw err;
   }
 }
@@ -208,7 +208,7 @@ Promise<{team:string, name:string, nickName:string}[] | undefined> {
       return players;
     }
   } catch (err) {
-    console.error(err);
+    logger.error(err);
   }
   return undefined;
 }
@@ -357,7 +357,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
 export async function postPlayer(ttDate:TTDate):Promise<string> {
   const sheets:sheets_v4.Sheets = await getGoogleSheets();
   const googleConfig = await getGoogleConfig();
-  console.log("Start to post player");
+  logger.debug("Start to post player");
   try {
     const values =[[ttDate.option]];
     const dates = await getDates(ttDate.activePlayers);

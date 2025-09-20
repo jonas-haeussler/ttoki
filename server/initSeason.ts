@@ -1,11 +1,14 @@
-import {Game, TTDate, TTDates, Venue} from './types.js';
-import {addNewGoogleConfigDrive, createNewSpreadsheet, fetchGoogleConfigsDrive, fetchTeamConfigDrive, postTable} from './googleUtils.js';
+import {Config, Game, TTDate, TTDates, Venue} from './types.js';
+import {addNewGoogleConfigDrive, createNewSpreadsheet, tryFetchGoogleConfigsDrive, tryFetchTeamConfigDrive, postTable} from './googleUtils.js';
 import {DateTime} from 'luxon';
 import {v4 as uuid} from 'uuid';
 import {fetchTeams, getTablesFromHTML} from './myTTUtils.js';
 import {parse} from 'node-html-parser';
 import {getPlayersForTeam, readClubs, writeEnemies, getTeamConfigLocal} from './utils.js';
 import fetch from 'node-fetch';
+import logger from './logger.js';
+import { TeamResponse } from './team_response.js';
+import { debug } from 'console';
 
 
 /**
@@ -13,23 +16,32 @@ import fetch from 'node-fetch';
  * @param {Array<Array<string>>} table The table to get the matches from
  * @return {{date, Array<Game>}} A TTDates representation of dates parsed from tables
  */
-function getGamesForTeam(table: string[][]):{date:string, game:Game}[] {
+function getGamesForTeam(team: TeamResponse):{date:string, game:Game}[] {
   const arr = [];
-  for (const entry of table) {
-    if (entry.length > 0) {
-      const date = entry[0];
-      const time = entry[1].split(' ')[0];
-      const venue = entry[3].includes('Oberkirchberg') ?
-        Venue.Home : Venue.Abroad;
-      const enemy = venue === Venue.Home ? entry[4] : entry[3];
-      const game:Game = {
-        time: time,
-        enemy: enemy,
-        venue: venue,
-      };
-      arr.push({date: date.split(' ')[1], game: game});
+  for (const meetingDate of team.tableData.meetings_excerpt.meetings) {
+      Object.keys(meetingDate).forEach((date) => {
+        const dateObj = new Date(meetingDate[date][0]["date"]);
+        const formattedDate = new Intl.DateTimeFormat('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit'
+        }).format(dateObj); // "27.09.25"
+        const time = new Intl.DateTimeFormat('de-DE', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).format(dateObj); // "18:30"
+        arr.push({
+          date: formattedDate,
+          game: {
+            venue: meetingDate[date][0]["team_home"].includes("Oberkirchberg") ? Venue.Home : Venue.Abroad,
+            enemy: meetingDate[date][0]["team_home"].includes("Oberkirchberg") ? meetingDate[date][0]["team_away"] : meetingDate[date][0]["team_home"],
+            time: time,
+          }
+        })
+      });
     }
-  }
+  console.log(arr);
   return arr;
 }
 
@@ -45,14 +57,13 @@ function getDateRange(dateIndex:number):string {
 /**
  * Load the table tennis matches from mytischtennis
  */
-async function loadMatches():Promise<TTDates> {
-  const teams = await fetchTeams();
-  const tablesFirstTeam = getTablesFromHTML(await teams[0].text());
-  const tablesSecondTeam = getTablesFromHTML(await teams[1].text());
-  const gamesFirstTeam = getGamesForTeam(tablesFirstTeam.playingPlanDesktop)[Symbol.iterator]();
-  const gamesSecondTeam = getGamesForTeam(tablesSecondTeam.playingPlanDesktop)[Symbol.iterator]();
-  const playersFirstTeam = getPlayersForTeam(tablesFirstTeam.gamestatsTable);
-  const playersSecondTeam = getPlayersForTeam(tablesSecondTeam.gamestatsTable);
+async function loadMatches(config: Config):Promise<TTDates> {
+  const teams = await fetchTeams(config.teams, config.saison, config.round);
+  console.log(teams);
+  const gamesFirstTeam = getGamesForTeam(teams[0])[Symbol.iterator]();
+  const gamesSecondTeam = getGamesForTeam(teams[1])[Symbol.iterator]();
+  // const playersFirstTeam = getPlayersForTeam(tablesFirstTeam.gamestatsTable);
+  // const playersSecondTeam = getPlayersForTeam(tablesSecondTeam.gamestatsTable);
   
   let gameFirstTeam = gamesFirstTeam.next();
   let gameSecondTeam = gamesSecondTeam.next();
@@ -61,12 +72,15 @@ async function loadMatches():Promise<TTDates> {
     if (gameFirstTeam.done && gameSecondTeam.done) break;
     let firstDate = DateTime.now().setZone('Europe/Paris');
     let secondDate = DateTime.now().setZone('Europe/Paris');
+    logger.debug(`Parsing date ${JSON.stringify(gameFirstTeam)}, ${JSON.stringify(gameSecondTeam)}`);
     if (gameFirstTeam.value) {
       firstDate = DateTime.fromFormat(gameFirstTeam.value.date, 'dd.MM.yy', {zone: 'Europe/Paris'});
     }
+    logger.debug(`First Date: ${firstDate}`)
     if (gameSecondTeam.value) {
       secondDate = DateTime.fromFormat(gameSecondTeam.value.date, 'dd.MM.yy', {zone: 'Europe/Paris'});
     }
+    logger.debug(`Second Date: ${secondDate}`)
     const entry:Record<string, any> = {
       id: uuid(),
       activePlayers: [],
@@ -74,29 +88,35 @@ async function loadMatches():Promise<TTDates> {
     };
     if (gameFirstTeam.value &&
        (!gameSecondTeam.value || firstDate.startOf('day') <= secondDate.startOf('day'))) {
+      logger.debug(`Writing game of first team ${JSON.stringify(gameFirstTeam)}`)
       entry.date = firstDate.toFormat('dd.MM.yy');
       entry.firstTeam = gameFirstTeam.value.game;
+      logger.debug(`Entry ${JSON.stringify(entry)}`)
       gameFirstTeam = gamesFirstTeam.next();
     }
     if (gameSecondTeam.value && 
       (!gameFirstTeam.value || firstDate.startOf('day') >= secondDate.startOf('day'))) {
+      logger.debug(`Writing game of second team ${JSON.stringify(gameSecondTeam)}`)
       entry.date = secondDate.toFormat('dd.MM.yy');
       entry.secondTeam = gameSecondTeam.value.game;
+      logger.debug(`Entry ${JSON.stringify(entry)}`)
       gameSecondTeam = gamesSecondTeam.next();
     }
+    logger.debug(`Finished entry ${JSON.stringify(entry)}`);
     entries.push(entry as TTDate);
   }
   const allPlayers:{team:string, name:string, nickName:string}[] = [];
-  for (const player of playersFirstTeam.concat(playersSecondTeam)) {
-    allPlayers.push({team: 'Team', name: player, nickName: 'Spitzname'});
-  }
+  // todo
+  // for (const player of playersFirstTeam.concat(playersSecondTeam)) {
+  //   allPlayers.push({team: 'Team', name: player, nickName: 'Spitzname'});
+  // }
   return {ttDates: entries, allPlayers: allPlayers};
 }
 /**
  * 
  */
-async function initTable() {
-  const ttDates:TTDates = await loadMatches();
+async function initTable(config: Config) {
+  const ttDates:TTDates = await loadMatches(config);
   const spreadSheetId = await createNewSpreadsheet();
   if (spreadSheetId) {
     await addNewGoogleConfigDrive({
@@ -199,18 +219,19 @@ async function initAllEnemies() {
 }
 (async () => {
   try {
-    console.log("Fetching configs from google drive");
-    await fetchGoogleConfigsDrive();
-    await fetchTeamConfigDrive();
-    console.log("Finished");
-    console.log("Initialize tables");
-    await initTable();
-    console.log("Finished");
-    console.log("Update configs on google drive");
+    logger.debug("Fetching configs from google drive");
+    await tryFetchGoogleConfigsDrive();
+    await tryFetchTeamConfigDrive();
+    logger.debug("Finished");
+    logger.debug("Initialize tables");
+    const config = await getTeamConfigLocal()
+    await initTable(config);
+    logger.debug("Finished");
+    logger.debug("Update configs on google drive");
     await initAllEnemies();
-    console.log("Finished");
+    logger.debug("Finished");
   } catch (err) {
-    console.error("Something went wrong on init:", err);
+    logger.debug("Something went wrong on init:", err);
     process.exit(1); // Exit with error code
   }
 })();

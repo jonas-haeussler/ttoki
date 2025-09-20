@@ -40,14 +40,14 @@ export interface Game {
   readonly venue:Venue
 }
 export interface Player {
-  readonly team?:1 | 2 | 3 | 4 | 5 | 6 | 7,
+  readonly team?:number,
   readonly name:string,
   readonly nickName?:string,
   readonly actions:number,
   readonly wins:number,
   readonly loses:number,
-  readonly ttr:number,
-  readonly qttr:number
+  readonly ttr?:number,
+  readonly qttr?:number
 }
 
 export interface Team {
@@ -64,7 +64,7 @@ export interface TTDate {
   readonly id:string,
   readonly date:string,
   readonly activePlayers:string[],
-  readonly availablePlayers:{team:string, name:string, nickName:string, option:Option}[],
+  readonly availablePlayers:{team:number, name:string, nickName:string, option:Option}[],
   readonly firstTeam:Game,
   readonly secondTeam:Game,
   option:Option,

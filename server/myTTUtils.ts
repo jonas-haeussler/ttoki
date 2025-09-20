@@ -1,9 +1,12 @@
 import {DateTime} from 'luxon';
 import fetch, {RequestInit, Response} from 'node-fetch';
 import {parse, HTMLElement} from 'node-html-parser';
-import {Config, Player, Tables, Team} from './types.js';
-import {getDates, getAllPlayers} from './googleUtils.js';
-import {getPlayersForTeam, readClubs, getTeamConfigLocal} from './utils.js';
+import {Config, Player, Tables, Team, TeamConfig} from './types.js';
+import {getDates} from './googleUtils.js';
+import {readClubs, getTeamConfigLocal} from './utils.js';
+import logger from './logger.js';
+import { TeamResponse } from './team_response.js';
+import { PlayerDataResponse } from './player_response.js';
 
 /**
  * Login for mytischtennis
@@ -24,24 +27,32 @@ export async function login(): Promise<RequestInit> {
     }).join(';');
   }
   const formData:URLSearchParams = new URLSearchParams();
-  formData.append('userNameB', process.env.MYTT_USERNAME);
-  formData.append('userPassWordB', process.env.MYTT_PASSWORD);
-  formData.append('targetPage', 'https://www.mytischtennis.de/community/index?fromlogin=1');
-  formData.append('goLogin', 'Einloggen');
+  formData.append('email', process.env.MYTT_EMAIL);
+  formData.append('password', process.env.MYTT_PASSWORD);
+  formData.append('intent', 'login');
   const options:RequestInit = {
     method: 'POST',
     headers: {
       'accept': '*/*',
-      'content-type': 'application/x-www-form-urlencoded',
+      'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      'origin': 'https://www.mytischtennis.de',
+      'referer': 'https://www.mytischtennis.de/'
     },
-    redirect: 'manual',
-    follow: 0,
-    // body: 'userNameB=--Johnny--&userPassWordB=fraudech1&permalogin=1&targetPage=https://www.mytischtennis.de/community/index?fromlogin=1&goLogin=Einloggen',
     body: formData,
   };
-
-
-  const login:Response = await fetch('https://www.mytischtennis.de/community/login', options);
+  logger.debug("Trying to login to mytischtennis");
+  const url = new URL("https://www.mytischtennis.de/login");
+  url.searchParams.set("next", "/");
+  url.searchParams.set("_data", "routes/_auth+/login");
+  const login:Response = await fetch(url, options);
+  logger.debug(`Login request returned status ${login.status}`);
+  if (login.headers.raw()['set-cookie'])
+    logger.debug(`Got login cookie from mytischtennis`);
+  else
+    logger.warn(`Failed to get login cookie from mytischtennis`);
+  
+  if (login == null || login == undefined)
+    throw Error('Login returned empty result.');
   const cookies = parseCookies(login);
   if (cookies == null) {
     throw Error('Did not get a valid login cookie');
@@ -70,30 +81,35 @@ async function fetchTeam(saison:string,
     groupId:string,
     teamId:string,
     teamName:string,
-    round:string):Promise<Response> {
-  return await fetch(`https://www.mytischtennis.de/clicktt/TTBW/` +
+    round:string):Promise<TeamResponse> {
+  const url = new URL(`https://www.mytischtennis.de/click-tt/TTBW/` +
     `${saison}/ligen/${league}/gruppe/${groupId}/mannschaft/${teamId}/` +
-    `${teamName}/spielerbilanzen/${round}/`);
+    `${teamName}/spielerbilanzen/${round}`);
+  url.searchParams.set('_data', 'routes/click-tt+/$association+/$season+/$type+/($groupname).gruppe.$urlid_.mannschaft.$teamid.$teamname+/spielerbilanzen.$filter');
+  logger.debug(`Trying to fetch statistics for team ${teamName}`);
+  const response = await fetch(url);
+  if (response.status >= 400)
+    logger.error(`Got response code ${response.status} from server.`);
+  else 
+    logger.debug("Successfully got response from server");
+  logger.debug(response.body);
+  const team = await response.json() as TeamResponse;
+  logger.debug(`Successfully parsed server result into object: ${JSON.stringify(team)}`);
+  return team;
 }
 
 /**
  *
  */
-export async function fetchTeams():Promise<Response[]> {
-  const config:Config = await getTeamConfigLocal();
-  const team1 = await fetchTeam(config.saison,
-      config.teams[0].league,
-      config.teams[0].groupId,
-      config.teams[0].teamId,
-      config.teams[0].teamName,
-      config.round);
-  const team2 = await fetchTeam(config.saison,
-      config.teams[1].league,
-      config.teams[1].groupId,
-      config.teams[1].teamId,
-      config.teams[1].teamName,
-      config.round);
-  return [team1, team2];
+export async function fetchTeams(teams: TeamConfig[], saison: string, round: string):Promise<TeamResponse[]> {
+  const teamPromises = teams.map(team =>
+    fetchTeam(saison,
+      team.league,
+      team.groupId,
+      team.teamId,
+      team.teamName,
+      round));
+  return await Promise.all(teamPromises);
 }
 
 /**
@@ -137,151 +153,76 @@ export function getTablesFromHTML(html: string):Tables {
   }
 }
 
-/**
- *
- * @param {{string, number, number}} players
- * @param {string} html
- * @param {boolean} quartal
- * @return {{string, number, number}}
- */
-function getTTRForPlayers(players:{name:string,
-    ttr:number, qttr:number}[],
-html:string, quartal:boolean):{name:string, ttr:number, qttr:number}[] {
-  const root = parse(html);
-  const th = root.querySelectorAll('.table-mytt > thead > tr > th');
 
-  const ttrIndex = th.indexOf(th.find((el) => el.innerHTML.includes('TTR')) || th[0]);
-  const table = root.querySelectorAll('.table-mytt > tbody').find((el) => el.childNodes.length > 0);
-  const rows = table?.querySelectorAll('tr').filter((el) => {
-    return players.some((player) => el.rawText.includes(player.name));
-  });
-  for (let i = 0; i < players.length; i++) {
-    const row = rows?.find((r) => r.rawText.includes(players[i].name));
-    const ttrStr = row?.getElementsByTagName('td')[ttrIndex].innerHTML;
-    if (ttrStr) {
-      const ttr = parseInt(ttrStr);
-      if (quartal) {
-        players[i].qttr = ttr;
-      } else {
-        players[i].ttr = ttr;
+async function fetchTTRValues(player: Player, playerId: string): Promise<Player> {
+  const slicedPlayerId = playerId.startsWith("NU") ? playerId.slice(2) : playerId;
+  const url = new URL(`https://www.mytischtennis.de/click-tt/spieler/${slicedPlayerId}/spielerportrait`);
+  url.searchParams.set('_data', 'routes/click-tt+/spieler.$id.spielerportrait.($match_type)');
+  logger.debug(`Trying to get ttr data for player ${slicedPlayerId}`);
+  const response = await fetch(url);
+  if (response.status >= 400)
+    logger.error(`Got response code ${response.status} from server.`);
+  else 
+    logger.debug("Successfully got response from server");
+  const playerData = await response.json() as PlayerDataResponse;
+  logger.debug(`Successfully parsed server result into object: ${JSON.stringify(playerData)}`);
+  try {
+    const playerWithTtr = {...player, ttr: playerData.data.player_infos.ttr, qttr: playerData.data.player_infos.qttr};
+    return playerWithTtr;
+  } catch(e) {
+    logger.warning(`Something went wrong on getting ttr values out of server retrieved result: ${e}`);
+  }
+  return player;
+}
+
+async function fetchPlayers(teams:TeamResponse[]):Promise<Player[]> {
+  const players: Record<string, Player> = {}
+  let teamCounter = 1;
+  for (const team of teams) {
+    for (const sheet of team.data.balancesheet) {
+      for (const statistic of sheet.single_player_statistics) {
+        const player: Player = {
+          team: teamCounter,
+          name: `${statistic.player_firstname} ${statistic.player_lastname}`,
+          actions: Number(statistic.meeting_count), 
+          loses: statistic.single_statistics.filter(item => item.points_lost == "1").length,
+          wins: statistic.single_statistics.filter(item => item.points_won == "1").length,
+        }
+        if (players.hasOwnProperty(statistic.player_id)) {
+          players[statistic.player_id] = {
+            team: player.team,
+            name: player.name,
+            actions: player.actions + players[statistic.player_id].actions,
+            loses: player.loses + players[statistic.player_id].loses,
+            wins: player.wins + players[statistic.player_id].wins,
+          }
+        }
+        else {
+          players[statistic.player_id] = player;
+        }
       }
     }
+    teamCounter++;
   }
-  return players;
-}
-
-/**
- * @param {[Player]} ttrs
- * @param {[[string]]} gamestatsTable
- * @return {[Player]}
- */
-function parsePlayerStats(ttrs:Player[],
-    gamestatsTable:string[][]) {
-  const players:Player[] = [];
-  for (const player of ttrs) {
-    let actions = player.actions;
-    let wins = player.wins;
-    let loses = player.loses;
-    const row = gamestatsTable.find((el) => {
-      const names = player.name.split(' ');
-      const playerNameMod = `${names[1]}, ${names[0]}`;
-      return el[1].includes(playerNameMod);
-    });
-    if (row) {
-      actions += parseInt(row[2]);
-      const balance = row[9];
-      wins += parseInt(balance.split(':')[0]);
-      loses += parseInt(balance.split(':')[1]);
-    }
-    players.push({
-      team: player.team,
-      name: player.name,
-      ttr: player.ttr,
-      qttr: player.qttr,
-      actions: actions,
-      wins: wins,
-      loses: loses});
+  const promises = Object.keys(players).map(key => fetchTTRValues(players[key], key));
+  try {
+    const results = await Promise.all(promises);
+    return results;
+  } catch(e) {
+    logger.error(`Something went wrong on fetching player ttr data: ${e}`);
   }
-  return players;
-}
-
-/**
- *
- * @param {[Player]} ttrs
- * @return {Promise<Player[]>}
- */
-async function getPlayerStats(
-    ttrs:Player[]):Promise<Player[]> {
-  const teams = await fetchTeams();
-  const tablesFirstTeam = getTablesFromHTML(await teams[0].text());
-  const tablesSecondTeam = getTablesFromHTML(await teams[1].text());
-  const playersFirstTeam = parsePlayerStats(ttrs, tablesFirstTeam.gamestatsTable);
-  const players = parsePlayerStats(playersFirstTeam, tablesSecondTeam.gamestatsTable);
-  return players;
-}
-
-/**
- *
- * @param {boolean} quartal
- * @param {string} clubId
- * @return {string}
- */
-function getTTRLink(quartal:boolean, clubId:string) {
-  const link = quartal ? `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW&ttrQuartalorAktuell=quartal` :
-    `https://www.mytischtennis.de/community/ajax/_rankingList?vereinid=${clubId},TTBW`;
-  return link;
-}
-
-/**
- * @param {RequestInit} loginOpt
- * @param {{string, number, number}[]} players
- * @param {string} clubId
- * @return {Promise<Player[]>}
- */
-async function getStatisticsForPlayers(loginOpt:RequestInit,
-    players:{name:string,
-    ttr:number,
-    qttr:number}[],
-    clubId:string):Promise<Player[]> {
-  let quartal = false;
-  let html = await fetch(getTTRLink(quartal, clubId), loginOpt);
-  let ttrs = getTTRForPlayers(players, await html.text(), quartal);
-  quartal = true;
-  html = await fetch(getTTRLink(quartal, clubId), loginOpt);
-  ttrs = getTTRForPlayers(ttrs, await html.text(), quartal);
-  const playerObjects:Player[] = [];
-  for (const elem of ttrs) {
-    playerObjects.push({
-      ...elem,
-      actions: 0,
-      wins: 0,
-      loses: 0,
-    });
-  }
-  return await getPlayerStats(playerObjects);
+  return Object.keys(players).map(key => players[key]);
 }
 
 /**
  * @param {RequestInit} loginOpt
  * @return {Promise<Player[]>}
  */
-export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]> {
-  const players:({team:string, name:string, nickName:string}[]|undefined) = await getAllPlayers();
-  if (players === undefined) return [];
-  const clubs:{name:string, id:string}[] = await readClubs();
-  const clubId:(string | undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
-  const playerObjects = players.map((player) => {
-    return {team: Number.parseInt(player.team),
-      name: player.name,
-      nickName: player.nickName,
-      ttr: 0,
-      qttr: 0};
-  });
-  if (clubId) {
-    return await getStatisticsForPlayers(loginOpt, playerObjects, clubId);
-  } else {
-    return new Promise(() => playerObjects);
-  }
+export async function getMyTTOkiTeamData():Promise<Player[]> {
+  const config:Config = await getTeamConfigLocal();
+  const teams = await fetchTeams(config.teams, config.saison, config.round);
+  const players = await fetchPlayers(teams);
+  return players;
 }
 
 /**
@@ -289,8 +230,7 @@ export async function getMyTTOkiTeamData(loginOpt:RequestInit):Promise<Player[]>
  * @param {string} teamName
  * @return {Promise<Player[] | undefined>}
  */
-async function getEnemyPlayers(loginOpt:RequestInit,
-    teamName:string):Promise<Player[] | undefined> {
+async function getEnemyPlayers(teamName:string):Promise<Player[] | undefined> {
   let enemy = undefined;
   let league = undefined;
   let groupId = undefined;
@@ -308,14 +248,7 @@ async function getEnemyPlayers(loginOpt:RequestInit,
           enemy?.enemyId,
           enemy?.enemyName,
           config.round);
-      const tables = getTablesFromHTML(await response.text());
-      const playerNames = getPlayersForTeam(tables.gamestatsTable);
-      const playerObjects = playerNames.map((player) => {
-        const names = player.split(', ');
-        return {name: names[1] + ' ' + names[0], ttr: 0, qttr: 0};
-      });
-      const ttrs = await getStatisticsForPlayers(loginOpt, playerObjects, clubId);
-      const players = parsePlayerStats(ttrs, tables.gamestatsTable);
+      const players = await fetchPlayers([response]);
       return players;
     }
   }
@@ -325,7 +258,7 @@ async function getEnemyPlayers(loginOpt:RequestInit,
  * @param {RequestInit} loginOpt
  * @return {Promise<{allies:Team[], enemies:Team[]}>}
  */
-export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], enemies:Team[]}> {
+export async function getUpcoming(okiPlayers: Player[]):Promise<{allies:Team[], enemies:Team[]}> {
   const data = (await getDates([]));
   const ttDates = data?.ttDates;
   const nextDateFirstTeam = ttDates?.find((d) => {
@@ -338,29 +271,40 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
       return DateTime.fromISO(d.date).diffNow().toMillis() > 0;
     }
   });
-  const playerObjectsFirst = nextDateFirstTeam?.availablePlayers.map((player) => {
-    return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0};
+  let playerObjectsFirst = nextDateFirstTeam?.availablePlayers.map((player) => {
+    return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0, actions: 0, wins: 0, loses: 0};
   });
+  playerObjectsFirst = playerObjectsFirst.map(player => {
+    const okiPlayer = okiPlayers.find(pl => pl.name == player.name);
+    return {...player, ttr: okiPlayer?.ttr, qttr: okiPlayer?.qttr, actions: okiPlayer?.actions, wins: okiPlayer?.wins, loses: okiPlayer?.loses};
+  });
+  logger.debug(`Found oki players for next match first: ${playerObjectsFirst.length}`)
+  let playerObjectsSecond = nextDateSecondTeam?.availablePlayers.map((player) => {
+    return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0, actions: 0, wins: 0, loses: 0};
+  });
+  playerObjectsSecond = playerObjectsSecond.map(player => {
+    const okiPlayer = okiPlayers.find(pl => pl.name == player.name);
+    if (okiPlayer)
+      return {...player, ttr: okiPlayer?.ttr, qttr: okiPlayer?.qttr, actions: okiPlayer?.actions, wins: okiPlayer?.wins, loses: okiPlayer?.loses};
+    return {...player, ttr: 0, qttr: 0, actions: 0, wins: 0, loses: 0};
+  });
+  logger.debug(`Found oki players for next match second: ${playerObjectsSecond.length}`)
   const allies:Team[] = [];
   const enemies:Team[] = [];
   const clubs:{name:string, id:string}[] = await readClubs();
   const clubId:(string|undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
-  if (playerObjectsFirst && clubId) {
+  if (clubId) {
     allies.push({
       name: 'TSG Oberkirchberg',
-      members: (await getStatisticsForPlayers(loginOpt, playerObjectsFirst, clubId)).slice(0, 6),
+      members: playerObjectsFirst.filter(player => player.team == 1).slice(0, 6),
     });
   }
-  const playerObjectsSecond = nextDateSecondTeam?.availablePlayers.map((player) => {
-    return {team: player.team, name: player.name, nickName: player.nickName, ttr: 0, qttr: 0};
-  });
-  if (playerObjectsSecond && clubId) {
+  if (clubId) {
     let members;
     if (nextDateFirstTeam?.date === nextDateSecondTeam?.date) {
-      members = (await getStatisticsForPlayers(loginOpt, playerObjectsSecond, clubId)).slice(6);
+      members = playerObjectsSecond.slice(6);
     } else {
-      members = (await getStatisticsForPlayers(loginOpt,
-          playerObjectsSecond.filter((el) => el.team === '2'), clubId)).slice(0, 6);
+      members = playerObjectsSecond.filter((el) => el.team == 2);
     }
     allies.push({
       name: 'TSG Oberkirchberg II',
@@ -370,13 +314,13 @@ export async function getUpcoming(loginOpt:RequestInit):Promise<{allies:Team[], 
   if (nextDateFirstTeam) {
     enemies.push({
       name: nextDateFirstTeam.firstTeam.enemy,
-      members: await getEnemyPlayers(loginOpt, nextDateFirstTeam.firstTeam.enemy) || [],
+      members: await getEnemyPlayers(nextDateFirstTeam.firstTeam.enemy) || [],
     });
   }
   if (nextDateSecondTeam) {
     enemies.push({
       name: nextDateSecondTeam.secondTeam.enemy,
-      members: await getEnemyPlayers(loginOpt, nextDateSecondTeam.secondTeam.enemy) || [],
+      members: await getEnemyPlayers(nextDateSecondTeam.secondTeam.enemy) || [],
     });
   }
   return {allies: allies, enemies: enemies};

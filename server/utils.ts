@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'fs/promises';
 import {Config, GoogleConfig} from './types.js';
 import { Mutex } from 'async-mutex';
 import { DateTime } from 'luxon';
+import logger from './logger.js';
 
 export let teamConfigPath = './teamConfig.json';
 export const teamLock = new Mutex();
@@ -27,12 +28,12 @@ let lastTimeGoogleConfigFetched = DateTime.now();
 export async function getTeamConfigLocal():Promise<Config> {
     if (lastTimeTeamConfigFetched.diffNow().milliseconds < fetchTime && cachedTeamConfig !== null)
       return structuredClone(cachedTeamConfig);
-    if (process.env.NODE_ENV !== 'production')
-      console.log("Getting team config from local");
+    logger.info("Getting team config from local");
     try {
       const raw = (await safeReadFile(teamConfigPath, teamLock)).toString();
       const config:Config = JSON.parse(raw) as Config;
       cachedTeamConfig = config;
+      lastTimeTeamConfigFetched = DateTime.now();
       return structuredClone(config);
     } catch(error) {
       console.error("Failed to read file " + teamConfigPath);
@@ -56,15 +57,15 @@ export async function getGoogleConfigsLocal():Promise<GoogleConfig[]> {
   if (lastTimeGoogleConfigFetched.diffNow().milliseconds < fetchTime && cachedGoogleConfigs !== null) {
       return structuredClone(cachedGoogleConfigs);
   }
-  if (process.env.NODE_ENV !== 'production')
-    console.log("Getting local googleConfig");
+  logger.debug("Getting local googleConfig");
   try {
     const rawContent = await safeReadFile(googleConfigPath, googleLock);
     const configs = JSON.parse(rawContent) as Array<GoogleConfig>;
     cachedGoogleConfigs = configs;
+    lastTimeGoogleConfigFetched = DateTime.now();
     return structuredClone(configs);
   } catch(error) {
-    console.log("Failed to load file: " + googleConfigPath);
+    logger.error("Failed to load file: " + googleConfigPath);
   }
   return undefined;
 }
