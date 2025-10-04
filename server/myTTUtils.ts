@@ -3,10 +3,11 @@ import fetch, {RequestInit, Response} from 'node-fetch';
 import {parse, HTMLElement} from 'node-html-parser';
 import {Config, Player, Tables, Team, TeamConfig} from './types.js';
 import {getDates} from './googleUtils.js';
-import {readClubs, getTeamConfigLocal} from './utils.js';
+import {getTeamConfig, getPlayersForTeamsFirebase} from './utils.js';
 import logger from './logger.js';
 import { TeamResponse } from './team_response.js';
 import { PlayerDataResponse } from './player_response.js';
+import { Firestore } from '@google-cloud/firestore';
 
 /**
  * Login for mytischtennis
@@ -112,47 +113,6 @@ export async function fetchTeams(teams: TeamConfig[], saison: string, round: str
   return await Promise.all(teamPromises);
 }
 
-/**
- * Parse html tables to get a javascript representation
- * @param {Response} html The html snippet to parse the tables from
- * @return {Array<Array<string>>} The table in an array representation
- */
-export function getTablesFromHTML(html: string):Tables {
-  /**
-   *
-   * @param {[HTMLElement]} rows
-   * @return {[[string]]}
-   */
-  function parseTable(rows: HTMLElement[]):string[][] {
-    const rowData = [];
-    for (const row of rows) {
-      if (row.classList.contains('divider-muted')) {
-        break;
-      }
-      if (!row.classList.contains('collapse')) {
-        const entries = row.getElementsByTagName('td')
-            .map((el) => {
-              // el.childNodes.forEach(node => el.removeChild(node));
-              return el.innerText.replace(/\n/g, '');
-            });
-        rowData.push(entries);
-      }
-    }
-    return rowData;
-  }
-  const root = parse(html);
-  const playingPlanDesktop = root.querySelectorAll('#playingPlanDesktop > tbody > tr');
-  const gamestatsTable = root.querySelectorAll('#gamestatsTable > tbody > tr');
-  if (playingPlanDesktop && gamestatsTable) {
-    return {
-      playingPlanDesktop: parseTable(playingPlanDesktop),
-      gamestatsTable: parseTable(gamestatsTable),
-    };
-  } else {
-    throw Error('Table "playingPlanDesktop" or "gamestatsTable" not found');
-  }
-}
-
 
 async function fetchTTRValues(player: Player, playerId: string): Promise<Player> {
   const slicedPlayerId = playerId.startsWith("NU") ? playerId.slice(2) : playerId;
@@ -175,8 +135,8 @@ async function fetchTTRValues(player: Player, playerId: string): Promise<Player>
   return player;
 }
 
-async function fetchPlayers(teams:TeamResponse[]):Promise<Player[]> {
-  const players: Record<string, Player> = {}
+async function fetchPlayers(teams:TeamResponse[]):Promise<Record<string, Player[]>> {
+  const players: Record<string, {teamId: string, player: Player}> = {}
   let teamCounter = 1;
   for (const team of teams) {
     for (const sheet of team.data.balancesheet) {
@@ -185,44 +145,73 @@ async function fetchPlayers(teams:TeamResponse[]):Promise<Player[]> {
           team: teamCounter,
           name: `${statistic.player_firstname} ${statistic.player_lastname}`,
           actions: Number(statistic.meeting_count), 
-          loses: statistic.single_statistics.filter(item => item.points_lost == "1").length,
-          wins: statistic.single_statistics.filter(item => item.points_won == "1").length,
+          loses: statistic.single_statistics.reduce((acc, item) => acc + Number(item.points_lost), 0),
+          wins: statistic.single_statistics.reduce((acc, item) => acc + Number(item.points_won), 0),
         }
         if (players.hasOwnProperty(statistic.player_id)) {
           players[statistic.player_id] = {
-            team: player.team,
-            name: player.name,
-            actions: player.actions + players[statistic.player_id].actions,
-            loses: player.loses + players[statistic.player_id].loses,
-            wins: player.wins + players[statistic.player_id].wins,
+            teamId: team.teamid,
+            player: {
+              team: player.team,
+              name: player.name,
+              actions: player.actions + players[statistic.player_id].player.actions,
+              loses: player.loses + players[statistic.player_id].player.loses,
+              wins: player.wins + players[statistic.player_id].player.wins
+            }
           }
         }
         else {
-          players[statistic.player_id] = player;
+          players[statistic.player_id] = { teamId: team.teamid, player: player };
         }
       }
     }
+    players 
     teamCounter++;
   }
-  const promises = Object.keys(players).map(key => fetchTTRValues(players[key], key));
+  
   try {
-    const results = await Promise.all(promises);
+    const unresolved = Object.keys(players).map(async key => { 
+      return { teamId: players[key].teamId, player: await fetchTTRValues(players[key].player, key) }
+    });
+  const resolved = await Promise.all(unresolved);
+  const results: Record<string, Player[]> = Object.entries(resolved).reduce(
+    (acc, [playerId, { teamId, player }]) => {
+      if (!acc[teamId]) acc[teamId] = [];
+      acc[teamId].push(player);
+      return acc;
+    },
+    {} as Record<string, Player[]>
+  );
     return results;
   } catch(e) {
     logger.error(`Something went wrong on fetching player ttr data: ${e}`);
   }
-  return Object.keys(players).map(key => players[key]);
+  return Object.entries(players).reduce(
+    (acc, [playerId, { teamId, player }]) => {
+      if (!acc[teamId]) acc[teamId] = [];
+      acc[teamId].push(player);
+      return acc;
+    },
+    {} as Record<string, Player[]>
+  );
 }
 
 /**
  * @param {RequestInit} loginOpt
  * @return {Promise<Player[]>}
  */
-export async function getMyTTOkiTeamData():Promise<Player[]> {
-  const config:Config = await getTeamConfigLocal();
+export async function getMyTTOkiTeamData(db: Firestore):Promise<Record<string, Player[]>> {
+  const config:Config = await getTeamConfig(db);
   const teams = await fetchTeams(config.teams, config.saison, config.round);
   const players = await fetchPlayers(teams);
   return players;
+}
+
+export async function getMyTTTeam(db: Firestore):Promise<Player[]> {
+  var config = await getTeamConfig(db);
+    if (config === undefined)
+      return;
+  return await getPlayersForTeamsFirebase(db, config.teams.map(team => team.teamId));
 }
 
 /**
@@ -230,27 +219,24 @@ export async function getMyTTOkiTeamData():Promise<Player[]> {
  * @param {string} teamName
  * @return {Promise<Player[] | undefined>}
  */
-async function getEnemyPlayers(teamName:string):Promise<Player[] | undefined> {
-  let enemy = undefined;
+async function getEnemyPlayers(
+  saison: string, 
+  round: string, 
+  team: TeamConfig, 
+  enemy: {enemyId:string, enemyName:string, enemyClubId:string}):Promise<Player[] | undefined> {
   let league = undefined;
   let groupId = undefined;
-  const config = await getTeamConfigLocal();
-  for (const team of config.teams) {
-    enemy = team.enemies?.find((enemy) => enemy.enemyName === teamName.replace(/ /g, '-')
-        .replace(/ö/g, 'oe').replace(/ä/g, 'ae').replace(/ü/g, 'ue'));
-    if (enemy) {
-      league = team.league;
-      groupId = team.groupId;
-      const clubId = enemy.enemyClubId;
-      const response = await fetchTeam(config.saison,
-          league,
-          groupId,
-          enemy?.enemyId,
-          enemy?.enemyName,
-          config.round);
-      const players = await fetchPlayers([response]);
-      return players;
-    }
+  if (enemy) {
+    league = team.league;
+    groupId = team.groupId;
+    const response = await fetchTeam(saison,
+        league,
+        groupId,
+        enemy?.enemyId,
+        enemy?.enemyName,
+        round);
+    const players = await fetchPlayers([response]);
+    return Object.values(players)[0];
   }
 }
 
@@ -258,8 +244,8 @@ async function getEnemyPlayers(teamName:string):Promise<Player[] | undefined> {
  * @param {RequestInit} loginOpt
  * @return {Promise<{allies:Team[], enemies:Team[]}>}
  */
-export async function getUpcoming(okiPlayers: Player[]):Promise<{allies:Team[], enemies:Team[]}> {
-  const data = (await getDates([]));
+export async function getUpcoming(db: Firestore, okiPlayers: Player[], fetch: boolean):Promise<{allies:Team[], enemies:Team[]}> {
+  const data = (await getDates(db, []));
   const ttDates = data?.ttDates;
   const nextDateFirstTeam = ttDates?.find((d) => {
     if (d.firstTeam) {
@@ -291,37 +277,48 @@ export async function getUpcoming(okiPlayers: Player[]):Promise<{allies:Team[], 
   logger.debug(`Found oki players for next match second: ${playerObjectsSecond.length}`)
   const allies:Team[] = [];
   const enemies:Team[] = [];
-  const clubs:{name:string, id:string}[] = await readClubs();
-  const clubId:(string|undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
-  if (clubId) {
-    allies.push({
-      name: 'TSG Oberkirchberg',
-      members: playerObjectsFirst.filter(player => player.team == 1).slice(0, 6),
-    });
+  // const clubs:{name:string, id:string}[] = await getClubs(db);
+  // const clubId:(string|undefined) = clubs.find((el) => 'TSG Oberkirchberg'.includes(el.name))?.id;
+  const teamConfig = await getTeamConfig(db);
+  allies.push({
+    id: teamConfig.teams[0].teamId,
+    members: playerObjectsFirst.filter(player => player.team == 1).slice(0, 6),
+  });
+  let members;
+  if (nextDateFirstTeam?.date === nextDateSecondTeam?.date) {
+    members = playerObjectsSecond.slice(6);
+  } else {
+    members = playerObjectsSecond.filter((el) => el.team == 2);
   }
-  if (clubId) {
-    let members;
-    if (nextDateFirstTeam?.date === nextDateSecondTeam?.date) {
-      members = playerObjectsSecond.slice(6);
-    } else {
-      members = playerObjectsSecond.filter((el) => el.team == 2);
-    }
-    allies.push({
-      name: 'TSG Oberkirchberg II',
-      members: members,
-    });
-  }
+  allies.push({
+    id: teamConfig.teams[1].teamId,
+    members: members,
+  });
   if (nextDateFirstTeam) {
-    enemies.push({
-      name: nextDateFirstTeam.firstTeam.enemy,
-      members: await getEnemyPlayers(nextDateFirstTeam.firstTeam.enemy) || [],
-    });
+    logger.debug(`Start processing enemy ${nextDateFirstTeam.firstTeam.enemy}`);
+    const teamName = nextDateFirstTeam.firstTeam.enemy;
+    logger.debug(`Looking up in teams ${JSON.stringify(teamConfig.teams[0].enemies)}`);
+    const enemy = teamConfig.teams[0].enemies?.find((enemy) => enemy.enemyName === teamName);
+    logger.debug(`Trying to get enemy players for enemy ${enemy?.enemyName}`);
+    if (enemy) {
+      enemies.push({
+        id: enemy.enemyId,
+        members: fetch ? await getEnemyPlayers(teamConfig.saison, teamConfig.round, teamConfig.teams[0], enemy) || [] : await getPlayersForTeamsFirebase(db, [enemy.enemyId]),
+      });
+    }
   }
   if (nextDateSecondTeam) {
-    enemies.push({
-      name: nextDateSecondTeam.secondTeam.enemy,
-      members: await getEnemyPlayers(nextDateSecondTeam.secondTeam.enemy) || [],
-    });
+    logger.debug(`Start processing enemy ${nextDateFirstTeam.secondTeam.enemy}`);
+    const teamName = nextDateSecondTeam.secondTeam.enemy;
+    const enemy = teamConfig.teams[1].enemies?.find((enemy) => enemy.enemyName === teamName);
+    logger.debug(`Trying to get enemy players for enemy ${enemy?.enemyName}`);
+    if (enemy) {
+      enemies.push({
+        id: enemy.enemyId,
+        members: fetch ? await getEnemyPlayers(teamConfig.saison, teamConfig.round, teamConfig.teams[1], enemy) || [] : await getPlayersForTeamsFirebase(db, [enemy.enemyId]),
+      });
+    }
   }
+  logger.debug(`Found enemies: ${JSON.stringify(enemies)}`);
   return {allies: allies, enemies: enemies};
 }

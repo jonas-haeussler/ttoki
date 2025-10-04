@@ -1,0 +1,4 @@
+cron:
+  - description: "Fetch ttr data every 5 hours"
+    url: /api/fetchMyTTData
+    schedule: every 5 hours

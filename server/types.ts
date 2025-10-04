@@ -51,7 +51,7 @@ export interface Player {
 }
 
 export interface Team {
-  readonly name:string,
+  readonly id:string,
   readonly members:Player[]
 }
 

@@ -1,14 +1,17 @@
-import {Config, Game, TTDate, TTDates, Venue} from './types.js';
-import {addNewGoogleConfigDrive, createNewSpreadsheet, tryFetchGoogleConfigsDrive, tryFetchTeamConfigDrive, postTable} from './googleUtils.js';
+import fs from 'fs';
+import {Config, Game, GoogleConfig, TTDate, TTDates, Venue} from './types.js';
+import {createNewSpreadsheet, postTable} from './googleUtils.js';
 import {DateTime} from 'luxon';
 import {v4 as uuid} from 'uuid';
-import {fetchTeams, getTablesFromHTML} from './myTTUtils.js';
+import {fetchTeams} from './myTTUtils.js';
 import {parse} from 'node-html-parser';
-import {getPlayersForTeam, readClubs, writeEnemies, getTeamConfigLocal} from './utils.js';
+import {getClubs, getTeamConfig} from './utils.js';
 import fetch from 'node-fetch';
 import logger from './logger.js';
 import { TeamResponse } from './team_response.js';
-import { debug } from 'console';
+import { Firestore } from '@google-cloud/firestore';
+import path from 'path';
+import dotenv from 'dotenv';
 
 
 /**
@@ -115,21 +118,25 @@ async function loadMatches(config: Config):Promise<TTDates> {
 /**
  * 
  */
-async function initTable(config: Config) {
+async function initTable(db: Firestore, config: Config): Promise<GoogleConfig> {
   const ttDates:TTDates = await loadMatches(config);
   const spreadSheetId = await createNewSpreadsheet();
-  if (spreadSheetId) {
-    await addNewGoogleConfigDrive({
-      spreadSheetId: spreadSheetId,
-      ranges: {
-        meta: 'Sheet1!A1:B7',
-        players: 'Sheet1!A9:C',
-        dates: 'Sheet1!D1:1',
-        gamesFirstTeam: 'Sheet1!D2:Z4',
-        gamesSecondTeam: 'Sheet1!D5:Z7',
-        entries: 'Sheet1!D9:ZZZ',
-      },
-    });
+  if (!spreadSheetId) {
+    logger.error("SpreadSheetId is null");
+    return;
+  }
+  const googleConfig: GoogleConfig = {
+    spreadSheetId: spreadSheetId,
+    ranges: {
+      meta: 'Sheet1!A1:B7',
+      players: 'Sheet1!A9:C',
+      dates: 'Sheet1!D1:1',
+      gamesFirstTeam: 'Sheet1!D2:Z4',
+      gamesSecondTeam: 'Sheet1!D5:Z7',
+      entries: 'Sheet1!D9:ZZZ',
+    },
+  };
+  await db.collection("spreadsheets").doc().set(googleConfig);
     const dateValues = [];
     const firstTeamEnemies = [];
     const firstTeamTimes = [];
@@ -137,38 +144,37 @@ async function initTable(config: Config) {
     const secondTeamEnemies = [];
     const secondTeamTimes = [];
     const secondTeamVenues = [];
-    for (const ttDate of ttDates.ttDates) {
-      dateValues.push(ttDate.date);
-      firstTeamEnemies.push(ttDate.firstTeam?.enemy ? ttDate.firstTeam.enemy : '');
-      let venue = (ttDate.firstTeam?.venue === Venue.Home ? 'Heim':'Auswärts');
-      firstTeamVenues.push(ttDate.firstTeam?.venue !== undefined ? venue : '');
-      firstTeamTimes.push(ttDate.firstTeam?.time ? ttDate.firstTeam.time : '');
-      secondTeamEnemies.push(ttDate.secondTeam?.enemy ? ttDate.secondTeam.enemy : '');
-      venue = ttDate.secondTeam?.venue === Venue.Home ? 'Heim':'Auswärts';
-      secondTeamVenues.push(ttDate.secondTeam?.venue !== undefined ? venue : '');
-      secondTeamTimes.push(ttDate.secondTeam?.time ? ttDate.secondTeam.time : '');
-    }
-    for (let i = 0; i < ttDates.allPlayers.length; i++) {
-      const currentPlayer = ttDates.allPlayers[i];
-      if (ttDates.allPlayers.slice(i + 1).includes(currentPlayer)) {
-        ttDates.allPlayers.splice(i, 1);
-        i--;
-      }
-    }
-    await postTable([dateValues],
-        [firstTeamEnemies, firstTeamVenues, firstTeamTimes],
-        [secondTeamEnemies, secondTeamVenues, secondTeamTimes],
-        ttDates.allPlayers.map((player) => {
-          const result = player.name.split(', ');
-          return ['Mannschaft', result[1] + ' ' + result[0], 'Spitzname'];
-        }));
+  for (const ttDate of ttDates.ttDates) {
+    dateValues.push(ttDate.date);
+    firstTeamEnemies.push(ttDate.firstTeam?.enemy ? ttDate.firstTeam.enemy : '');
+    let venue = (ttDate.firstTeam?.venue === Venue.Home ? 'Heim':'Auswärts');
+    firstTeamVenues.push(ttDate.firstTeam?.venue !== undefined ? venue : '');
+    firstTeamTimes.push(ttDate.firstTeam?.time ? ttDate.firstTeam.time : '');
+    secondTeamEnemies.push(ttDate.secondTeam?.enemy ? ttDate.secondTeam.enemy : '');
+    venue = ttDate.secondTeam?.venue === Venue.Home ? 'Heim':'Auswärts';
+    secondTeamVenues.push(ttDate.secondTeam?.venue !== undefined ? venue : '');
+    secondTeamTimes.push(ttDate.secondTeam?.time ? ttDate.secondTeam.time : '');
   }
+  for (let i = 0; i < ttDates.allPlayers.length; i++) {
+    const currentPlayer = ttDates.allPlayers[i];
+    if (ttDates.allPlayers.slice(i + 1).includes(currentPlayer)) {
+      ttDates.allPlayers.splice(i, 1);
+      i--;
+    }
+  }
+  await postTable(googleConfig, [dateValues],
+      [firstTeamEnemies, firstTeamVenues, firstTeamTimes],
+      [secondTeamEnemies, secondTeamVenues, secondTeamTimes],
+      ttDates.allPlayers.map((player) => {
+        const result = player.name.split(', ');
+        return ['Mannschaft', result[1] + ' ' + result[0], 'Spitzname'];
+      }));
 }
 
 /**
  * 
  */
-async function findEnemies(teamIndex:number):
+async function findEnemies(db: Firestore, teamIndex:number):
               Promise<{enemyId:string, enemyName:string, enemyClubId:string}[]> {
   /**
    * 
@@ -182,7 +188,7 @@ async function findEnemies(teamIndex:number):
       }
     }
   }
-  const config = await getTeamConfigLocal();
+  const config = await getTeamConfig(db);
   const response = await fetch(`https://www.mytischtennis.de/clicktt/TTBW/` +
   `${config.saison}/ligen/${config.teams[teamIndex].league}/gruppe/` +
   `${config.teams[teamIndex].groupId}/tabelle/${config.round}`);
@@ -195,7 +201,7 @@ async function findEnemies(teamIndex:number):
     const link = cell?.getAttribute('href');
     if (link) {
       const enemy = parseLink(link);
-      const clubs:{name:string, id:string}[] = await readClubs();
+      const clubs:{name:string, id:string}[] = await getClubs(db);
       if (typeof String.prototype.replaceAll === 'undefined') {
         String.prototype.replaceAll = function(match, replace) {
            return this.replace(new RegExp(match, 'g'), () => replace);
@@ -211,28 +217,28 @@ async function findEnemies(teamIndex:number):
   }
   return enemies;
 }
-/**
- * 
- */
-async function initAllEnemies() {
-  writeEnemies([await findEnemies(0), await findEnemies(1)]);
-}
-(async () => {
-  try {
-    logger.debug("Fetching configs from google drive");
-    await tryFetchGoogleConfigsDrive();
-    await tryFetchTeamConfigDrive();
-    logger.debug("Finished");
-    logger.debug("Initialize tables");
-    const config = await getTeamConfigLocal()
-    await initTable(config);
-    logger.debug("Finished");
-    logger.debug("Update configs on google drive");
-    await initAllEnemies();
-    logger.debug("Finished");
-  } catch (err) {
-    logger.debug("Something went wrong on init:", err);
-    process.exit(1); // Exit with error code
+
+async function initSeason(db: Firestore) {
+  logger.debug("Fetching configs from google drive");
+  logger.debug("Finished");
+  logger.debug("Initialize tables");
+  const config = await getTeamConfig(db);
+  await initTable(db, config);
+  logger.debug("Finished");
+  logger.debug("Update configs on google drive");
+  for (const [teamIndex, team] of config.teams.entries()) {
+    const enemies = await findEnemies(db, teamIndex);
+    team.enemies = enemies;
+    await db.collection("myTeams").doc().set(team);
   }
+  logger.debug("Finished");
+}
+
+(async () => {
+  dotenv.config();
+  const db = new Firestore({
+    databaseId: "ttoki"
+  });
+  await initSeason(db); 
 })();
 

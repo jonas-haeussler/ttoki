@@ -1,42 +1,38 @@
 /* eslint-disable camelcase */
-import { once } from 'events'; // native Node utility
 import {google, sheets_v4, drive_v3} from 'googleapis';
+import { JWT, OAuth2Client } from "google-auth-library";
 import {DateTime, Duration} from 'luxon';
 import {Game, Option, TTDates, TTDate, Venue, GoogleConfig} from './types.js';
 import {v4 as uuid} from 'uuid';
-import { clubConfigPath, clubLock, getGoogleConfig, getGoogleConfigsLocal, googleConfigPath, googleLock, safeReadFile, safeWriteFile, teamConfigPath, teamLock } from './utils.js';
 import logger from './logger.js';
-/**
- * 
- * @returns 
- */
-function getGoogleCredentials():Object | undefined {
-  
-  const keys = {
-    "type": "service_account",
-    "project_id": "lithe-paratext-282507",
-    "private_key_id": "4e1f6b28dcdc2409433ce3b11ae6b326a20e9009",
-    "private_key": process.env['PRIVATE_KEY']?.replace(/\\n/g, '\n'),
-    "client_email": "johnson@lithe-paratext-282507.iam.gserviceaccount.com",
-    "client_id": "102988443238800265971",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/johnson%40lithe-paratext-282507.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
-  }
-  return keys;
-}
+import { getCurrentGoogleConfig } from './utils.js';
+import { Firestore } from '@google-cloud/firestore';
 
+
+export async function printServiceAccount() {
+  const auth = new google.auth.GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+  });
+  // Get the client (OAuth2Client or JWT)
+  const client = await auth.getClient();
+
+  // Get the access token
+  const tokenInfo = await client.getAccessToken();
+  logger.info('Using Access token:', tokenInfo?.token);
+  
+  // Print client type
+  logger.info('Client constructor:', client.constructor.name);
+}
 /**
  * 
  * @returns 
  */
-export function getGoogleDrive():drive_v3.Drive | undefined {
-  const credentials = getGoogleCredentials();
+export async function getGoogleDrive():Promise<drive_v3.Drive | undefined> {
   const auth = new google.auth.GoogleAuth({
-    credentials: credentials,
-    scopes: ['https://www.googleapis.com/auth/drive']});
+    scopes: ['https://www.googleapis.com/auth/drive']
+  });
+  const client = (await auth.getClient());
+  logger.debug("Access token info for google drive:", await auth.getAccessToken());
   const drive:drive_v3.Drive = google.drive({version: 'v3', auth: auth});
   return drive;
 }
@@ -46,10 +42,9 @@ export function getGoogleDrive():drive_v3.Drive | undefined {
  * @return {Promise<sheets_v4.Sheets>} The google spreadsheets
  */
 async function getGoogleSheets():Promise<sheets_v4.Sheets> {
-  const credentials = getGoogleCredentials();
   const auth = new google.auth.GoogleAuth({
-    credentials: credentials,
-    scopes: ['https://www.googleapis.com/auth/spreadsheets']});
+    scopes: ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'] 
+   });
   const sheets:sheets_v4.Sheets = google.sheets({version: 'v4', auth: auth});
   return sheets;
 }
@@ -66,91 +61,6 @@ function getPlayerRange(playerIndex:number, dateIndex:number):string {
   return `R[${8 + playerIndex}]`;
 }
 
-/**
- * 
- * @param config 
- */
-export async function addNewGoogleConfigDrive(config:GoogleConfig):Promise<void> {
-  await tryFetchGoogleConfigsDrive();
-  const configs = await getGoogleConfigsLocal();
-  configs.push(config);
-  await safeWriteFile(googleConfigPath, JSON.stringify(configs), googleLock);
-  //todo -> push to drive
-}
-
-/**
- * 
- * @returns 
- */
-export async function tryFetchGoogleConfigsDrive():Promise<void> {
-  if (process.env.NODE_ENV !== 'production')
-    logger.debug("Getting googleConfig from drive");
-  const drive = getGoogleDrive();
-  try {
-    const raw = await drive.files.get({ fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", alt: "media" }, {responseType: "text"});
-    await safeWriteFile(googleConfigPath, raw.data as string, googleLock);
-  } catch (err) {
-    logger.error('Error writing file:', err);
-    throw err;
-  }
-}
-/**
- * 
- * @returns 
- */
-export async function tryFetchClubConfigDrive():Promise<void> {
-  logger.debug("Getting googleConfig from drive");
-  const drive = getGoogleDrive();
-  try {
-    const raw = await drive.files.get({ fileId: "1K6upNCtoedjMyrLRv14-r012OhyyclXs", alt: "media" }, {responseType: "text"});
-    await safeWriteFile(clubConfigPath, raw.data as string, clubLock);
-  } catch (err) {
-    logger.error('Error writing file:', err);
-    throw err;
-  }
-}
-/**
- * 
- * @returns 
- */
-export async function uploadGoogleConfigsDrive():Promise<void> {
-  if (process.env.NODE_ENV !== 'production')
-    console.log("Uploading googleConfig to drive (overwrite)");
-
-  const drive = getGoogleDrive();
-
-  try {
-    const res = await drive.files.update({
-      fileId: "1pyZhr9EVv0ZKzDcQ-Yetaj04VtxJHfZG", // same fileId as in fetch
-      media: {
-        mimeType: 'application/json',
-        body: await safeReadFile(googleConfigPath, googleLock)
-      }
-    });
-
-    console.log('File successfully overwritten. Drive file ID:', res.data.id);
-  } catch (err) {
-    console.error('Error uploading file:', err);
-    throw err;
-  }
-}
-
-/**
- * 
- */
-export async function tryFetchTeamConfigDrive():Promise<void> {
-  if (process.env.NODE_ENV !== 'production')
-    logger.debug("Getting team config from drive");
-  const drive = getGoogleDrive();
-  try {
-    const raw = await drive.files.get({ fileId: "1ROdQUPNJhPkKdgIL1YbDPn-2O52VXoah", alt: "media" }, {responseType: "text"});
-    await safeWriteFile(teamConfigPath, raw.data as string, teamLock);
-  } catch (err) {
-      logger.error('Error writing file:', err);
-      throw err;
-  }
-}
-
 
 /**
  * 
@@ -158,8 +68,8 @@ export async function tryFetchTeamConfigDrive():Promise<void> {
  * @param ranges 
  * @returns 
  */
-async function getRangeData(sheets:sheets_v4.Sheets, ranges:string[]) {
-  const googleConfig = await getGoogleConfig();
+async function getRangeData(db: Firestore, sheets:sheets_v4.Sheets, ranges:string[]) {
+  const googleConfig = await getCurrentGoogleConfig(db);
   const data = (await sheets.spreadsheets.values.batchGet({
     spreadsheetId: googleConfig.spreadSheetId,
     ranges: ranges,
@@ -170,7 +80,7 @@ async function getRangeData(sheets:sheets_v4.Sheets, ranges:string[]) {
  *
  */
 export async function createNewSpreadsheet():Promise<string|undefined> {
-  const drive = getGoogleDrive();
+  const drive = await getGoogleDrive();
   if (drive) {
     const spreadSheetId = (await drive.files.create({
       requestBody: {
@@ -190,10 +100,10 @@ export async function createNewSpreadsheet():Promise<string|undefined> {
  * @return {Promise<{team:string, name:string, nickName:string}[] | undefined>}
  * The currently available players
  */
-export async function getAllPlayers():
+export async function getAllPlayers(db: Firestore):
 Promise<{team:string, name:string, nickName:string}[] | undefined> {
   const sheets = await getGoogleSheets();
-  const googleConfig = await getGoogleConfig();
+  const googleConfig = await getCurrentGoogleConfig(db);
   if (googleConfig === undefined)
     return undefined;
   try {
@@ -235,7 +145,7 @@ export function parseDate(day:string, time?:string) : string {
  * @param {Array<string>} activePlayers The active players in the React App
  * @return {Promise<TTDate |undefined>} The result of the query
  */
-export async function getDates(activePlayers:string[]):Promise<TTDates|undefined> {
+export async function getDates(db: Firestore, activePlayers:string[]):Promise<TTDates|undefined> {
   /**
    * 
    * @param matches 
@@ -259,7 +169,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
 
   // eslint-disable-next-line camelcase
   const sheets:sheets_v4.Sheets = await getGoogleSheets();
-  const googleConfig = await getGoogleConfig();
+  const googleConfig = await getCurrentGoogleConfig(db);
   if (googleConfig === undefined)
     return undefined;
   const ranges = [
@@ -269,7 +179,7 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
     googleConfig.ranges.players,
     googleConfig.ranges.entries,
   ];
-  const data = await getRangeData(sheets, ranges);
+  const data = await getRangeData(db, sheets, ranges);
   if (data !== undefined) {
     let dates:string[] = [];
     let matchesFirstTeam:string[][] = [];
@@ -354,13 +264,13 @@ export async function getDates(activePlayers:string[]):Promise<TTDates|undefined
  * @param ttDate 
  * @returns 
  */
-export async function postPlayer(ttDate:TTDate):Promise<string> {
+export async function postPlayer(db: Firestore, ttDate:TTDate):Promise<string> {
   const sheets:sheets_v4.Sheets = await getGoogleSheets();
-  const googleConfig = await getGoogleConfig();
+  const googleConfig = await getCurrentGoogleConfig(db);
   logger.debug("Start to post player");
   try {
     const values =[[ttDate.option]];
-    const dates = await getDates(ttDate.activePlayers);
+    const dates = await getDates(db, ttDate.activePlayers);
     let players:string[] = [];
     if (dates) {
       players = dates.allPlayers.map((player) => player.name);
@@ -394,12 +304,13 @@ export async function postPlayer(ttDate:TTDate):Promise<string> {
  * @param gamesSecondTeam 
  * @param players 
  */
-export async function postTable(dates:string[][],
+export async function postTable(
+    googleConfig: GoogleConfig,
+    dates:string[][],
     gamesFirstTeam:string[][],
     gamesSecondTeam:string[][],
     players:string[][]) {
   const sheets:sheets_v4.Sheets = await getGoogleSheets();
-  const googleConfig:GoogleConfig = await getGoogleConfig();
   try {
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId: googleConfig.spreadSheetId,

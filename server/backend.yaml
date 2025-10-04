@@ -1,0 +1,11 @@
+service: backend
+runtime: nodejs20
+instance_class: F2
+env: standard
+entrypoint: npm start
+service_account: johnson@lithe-paratext-282507.iam.gserviceaccount.com
+
+
+env_variables:
+  PORT: "8080"
+  NODE_OPTIONS: "--max_old_space_size=2560"
