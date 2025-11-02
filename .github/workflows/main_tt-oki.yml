@@ -66,9 +66,9 @@ jobs:
       - name: List files to deploy
         run: |
           echo "Client deploy files:"
-          ls -R client/build
+          ls -R client/deploy
           echo "Server deploy files:"
-          ls -R server/build
+          ls -R server/deploy
 
       # 8️⃣ Deploy App Engine services
       - name: Deploy to App Engine
