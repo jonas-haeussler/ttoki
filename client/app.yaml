@@ -5,42 +5,42 @@ handlers:
 
   - url: /(.*\.css)
     mime_type: text/css
-    static_files: dist/\1
+    static_files: deploy/\1
     secure: always
-    upload: dist/(.*\.css)
+    upload: deploy/(.*\.css)
 
   - url: /(.*\.html)
     mime_type: text/html
-    static_files: dist/\1
-    upload: dist/(.*\.html)
+    static_files: deploy/\1
+    upload: deploy/(.*\.html)
     secure: always
 
   - url: /(.*\.js)
     mime_type: text/javascript
-    static_files: dist/\1
-    upload: dist/(.*\.js)
+    static_files: deploy/\1
+    upload: deploy/(.*\.js)
     secure: always
 
   - url: /(.*\.txt)
     mime_type: text/plain
-    static_files: dist/\1
-    upload: dist/(.*\.txt)
+    static_files: deploy/\1
+    upload: deploy/(.*\.txt)
     secure: always
 
   - url: /(.*\.xml)
     mime_type: application/xml
-    static_files: dist/\1
-    upload: dist/(.*\.xml)
+    static_files: deploy/\1
+    upload: deploy/(.*\.xml)
     secure: always
 
   # image files
   - url: /(.*\.(bmp|gif|ico|jpeg|jpg|png))
-    static_files: dist/\1
-    upload: dist/(.*\.(bmp|gif|ico|jpeg|jpg|png))
+    static_files: deploy/\1
+    upload: deploy/(.*\.(bmp|gif|ico|jpeg|jpg|png))
     secure: always
 
   # Catch all handler to index.html
   - url: /.*
-    static_files: dist/index.html
-    upload: dist/index.html
+    static_files: deploy/index.html
+    upload: deploy/index.html
     secure: always
