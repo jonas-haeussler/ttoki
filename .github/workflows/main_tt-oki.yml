@@ -3,7 +3,7 @@ name: Deploy to Google App Engine
 on:
   push:
     branches:
-      - main  # Change this if needed
+      - main
 
 jobs:
   deploy:
@@ -16,14 +16,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # or your app’s version
+          node-version: '18'
 
-      - name: Install dependencies
+      # --- Build the client ---
+      - name: Install client dependencies
+        working-directory: ./client
         run: npm ci
 
-      - name: Build app
+      - name: Build client
+        working-directory: ./client
         run: npm run build
 
+      # --- Build the server ---
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Build server
+        working-directory: ./server
+        run: npm run build
+
+      # --- Set up gcloud and deploy ---
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -33,4 +46,4 @@ jobs:
 
       - name: Deploy to App Engine
         run: |
-          gcloud app deploy client/app.yaml server/backend.yaml dispatch.yaml --quiet
+          gcloud app deploy app.yaml backend.yaml dispatch.yaml --quiet
