@@ -66,4 +66,4 @@ jobs:
       # 8️⃣ Deploy App Engine services
       - name: Deploy to App Engine
         run: |
-          gcloud app deploy client/app.yaml server/backend.yaml dispatch.yaml
+          gcloud app deploy client/app.yaml server/backend.yaml dispatch.yaml --verbosity=debug
