@@ -51,4 +51,4 @@ jobs:
       # --- Deploy to App Engine ---
       - name: Deploy to App Engine
         run: |
-          gcloud app deploy app.yaml backend.yaml dispatch.yaml --quiet
+          gcloud app deploy client/app.yaml server/backend.yaml dispatch.yaml --quiet
