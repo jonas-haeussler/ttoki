@@ -308,7 +308,7 @@ export async function getUpcoming(db: Firestore, okiPlayers: Player[], fetch: bo
     }
   }
   if (nextDateSecondTeam) {
-    logger.debug(`Start processing enemy ${nextDateFirstTeam.secondTeam.enemy}`);
+    logger.debug(`Start processing enemy ${nextDateSecondTeam.secondTeam.enemy}`);
     const teamName = nextDateSecondTeam.secondTeam.enemy;
     const enemy = teamConfig.teams[1].enemies?.find((enemy) => enemy.enemyName === teamName);
     logger.debug(`Trying to get enemy players for enemy ${enemy?.enemyName}`);
