@@ -62,6 +62,13 @@ jobs:
           rm -rf server/deploy
           mkdir -p server/deploy
           cp -r server/build/* server/deploy/
+      
+      - name: List files to deploy
+        run: |
+          echo "Client deploy files:"
+          ls -R client/deploy
+          echo "Server deploy files:"
+          ls -R server/deploy
 
       # 8️⃣ Deploy App Engine services
       - name: Deploy to App Engine
