@@ -10,15 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout the repo
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2️⃣ Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # --- Build client ---
+      # 3️⃣ Install and build client
       - name: Install client dependencies
         working-directory: ./client
         run: npm ci
@@ -27,7 +29,7 @@ jobs:
         working-directory: ./client
         run: npm run build
 
-      # --- Build server ---
+      # 4️⃣ Install and build server
       - name: Install server dependencies
         working-directory: ./server
         run: npm ci
@@ -36,19 +38,32 @@ jobs:
         working-directory: ./server
         run: npm run build
 
-      # --- Authenticate with Google Cloud ---
+      # 5️⃣ Authenticate to Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # --- Set up the Google Cloud SDK ---
+      # 6️⃣ Set up gcloud CLI
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # --- Deploy to App Engine ---
+      # 7️⃣ Ensure build outputs are included for deploy
+      - name: Prepare deploy folders
+        run: |
+          # Copy client build output to the same folder as app.yaml
+          rm -rf client/deploy
+          mkdir -p client/deploy
+          cp -r client/dist/* client/deploy/
+          
+          # Copy server build output to the same folder as backend.yaml
+          rm -rf server/deploy
+          mkdir -p server/deploy
+          cp -r server/build/* server/deploy/
+
+      # 8️⃣ Deploy App Engine services
       - name: Deploy to App Engine
         run: |
           gcloud app deploy client/app.yaml server/backend.yaml dispatch.yaml --quiet

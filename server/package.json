@@ -6,7 +6,7 @@
   "main": "build/index.js",
   "scripts": {
     "build": "tsc -p . && tsc-alias -p ./tsconfig.json",
-    "start": "node ./build/index.js",
+    "start": "node ./deploy/index.js",
     "init": "tsx initSeason.ts",
     "dev": "tsx index.ts"
   },
