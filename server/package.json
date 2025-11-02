@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "build/index.js",
+  "main": "deploy/index.js",
   "scripts": {
     "build": "tsc -p . && tsc-alias -p ./tsconfig.json",
     "start": "node ./deploy/index.js",
